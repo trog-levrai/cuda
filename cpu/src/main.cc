@@ -1,4 +1,5 @@
 #include "iostream"
+#include "model.hh"
 #include "../lib/lapacke.h"
  
 using namespace std;
