@@ -60,6 +60,7 @@ arma::Mat<float> Model::forward_keep(const arma::Mat<float>& X) {
 
     arma::Mat<float> o = X_ * W_;
     this->H.push_back(arma::Mat<float>(o));
+
     X_c = this->sigmoid_mat_(o);
     this->C.push_back(X_c);
   }
@@ -70,7 +71,7 @@ std::vector<arma::Mat<float>> Model::get_err(const arma::Mat<float> truth) {
   auto err0 = (truth - C.back()) * dsigmoid_mat_(H.back());
   auto err_vec = std::vector<arma::Mat<float>>();
   err_vec.push_back(err0);
-  for (int i = W.size() - 2; i > 0; --i) {
+  for (int i = W.size() - 2; i >= 0; --i) {
     auto err = dsigmoid_mat_(H[i]) * arma::sum((W[i] * err_vec.back()), 1);
     err_vec.push_back(err);
   }
