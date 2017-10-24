@@ -49,6 +49,8 @@ arma::Mat<float> Model::forward(const arma::Mat<float>& X) {
 }
 
 arma::Mat<float> Model::forward_keep(const arma::Mat<float>& X) {
+  this->H.clear();
+  this->C.clear();
   arma::Mat<float> X_c(X);
   for (auto& W_ : this->W)
   {
@@ -57,9 +59,9 @@ arma::Mat<float> Model::forward_keep(const arma::Mat<float>& X) {
     X_.insert_cols(X_.n_cols, tmp);
 
     arma::Mat<float> o = X_ * W_;
-    H.push_back(arma::Mat<float>(o));
+    this->H.push_back(arma::Mat<float>(o));
     X_c = this->sigmoid_mat_(o);
-    C.push_back(X_c);
+    this->C.push_back(X_c);
   }
   return X_c;
 }
