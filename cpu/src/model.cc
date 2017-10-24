@@ -10,8 +10,12 @@ void Model::init_W(size_t m, size_t n) {
   this->W.emplace_back(M);
 }
 
-arma::Mat<float> Model::normalize_(arma::Mat<float>& matrix) {
-  return matrix.each_row() - arma::mean(matrix);
+float Model::sigmoid_(float x) {
+  return 1.0 / (1.0 + std::exp(-x));
+}
+
+float Model::dsigmoid_(float x) {
+  return x * (1.0 - x);
 }
 
 void Model::add(size_t output_units, size_t input_units) {

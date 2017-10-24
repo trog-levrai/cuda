@@ -1,7 +1,8 @@
 # pragma once
 
+# include <math.h>
 # include <vector>
-#include <armadillo>
+# include <armadillo>
 
 class Model {
   public:
@@ -16,7 +17,8 @@ class Model {
   private:
     std::vector<arma::Mat<float>> W;
     
-    arma::Mat<float> normalize_(arma::Mat<float>&);
+    float sigmoid_(float);
+    float dsigmoid_(float);
     arma::Mat<float>& sigmoid_mat_(arma::Mat<float>&);
     arma::Mat<float>& dsigmoid_mat_(arma::Mat<float>&);
 };
