@@ -1,6 +1,7 @@
 # include "model.hh"
 
 # include <cmath>
+# include <stdexcept>
 
 void Model::init_W(size_t m, size_t n) {
   arma::mat M(m, n, fill::randu);
@@ -11,4 +12,19 @@ void Model::init_W(size_t m, size_t n) {
 
 arma::Mat<float> Model::normalize_(arma::Mat<float>& matrix) {
   return matrix.each_row() - arma::mean(matrix);
+}
+
+void Model::add(size_t output_units, size_t input_units) {
+  if (!this->W.empty())
+    throw std::runtime_error("An input layer has already been add");
+
+  init_W(input_units + 1, output_units);
+}
+
+void Model::add(size_t output_units) {
+  if (this->W.empty())
+    throw std::runtime_error("The model has no input layer");
+
+  size_t input_units = this->W.back().n_cols;
+  init_W(input_units + 1, output_units);
 }
