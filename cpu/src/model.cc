@@ -77,8 +77,10 @@ std::vector<arma::Mat<float>> Model::get_err(const arma::Mat<float> truth) {
   return err_vec;
 }
 
-/*
- *void Model::back_propagate(float lambda, const arma::Mat<float> truth) {
- *  auto err = get_err(truth);
- *}
- */
+void Model::back_propagate(float lambda, const arma::Mat<float> truth) {
+  auto err = get_err(truth);
+
+  for (size_t i = 0; i < W.size(); ++i) {
+    W[i] += lambda * err[i] * C[i];
+  }
+}
