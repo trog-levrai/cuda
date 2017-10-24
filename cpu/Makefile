@@ -6,5 +6,8 @@ CPPFLAGS=-llapack
 all:
 	$(CPP) $(SRC) $(CPPFLAGS) -o $(BIN)
 
+check: all
+	./$(BIN)
+
 clean:
 	$(RM) $(BIN)
