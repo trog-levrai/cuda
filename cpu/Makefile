@@ -1,5 +1,5 @@
 CPP=g++
-SRC=main.cc
+SRC=src/main.cc
 BIN=main
 CPPFLAGS=-llapack
 

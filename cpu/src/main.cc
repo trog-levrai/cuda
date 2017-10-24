@@ -1,5 +1,5 @@
 #include "iostream"
-#include"lapacke.h"
+#include "../lib/lapacke.h"
  
 using namespace std;
  
