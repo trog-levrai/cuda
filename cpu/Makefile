@@ -1,7 +1,7 @@
 CPP=g++
 SRC=src/main.cc
 BIN=main
-CPPFLAGS=-DARMA_DONT_USE_WRAPPER -lopenblas -llapack
+CPPFLAGS=-std=c++14 -DARMA_DONT_USE_WRAPPER -lblas -llapack
 
 all:
 	$(CPP) $(SRC) $(CPPFLAGS) -o $(BIN)
