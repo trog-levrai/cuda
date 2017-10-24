@@ -9,10 +9,10 @@ void Model::init_W(size_t m, size_t n) {
   this->W.emplace_back(M);
 }
 
-float Model::sigmoid_(float x) {
-  return 1.0 / (1.0 + std::exp(-x));
+arma::Mat<float> Model::sigmoid_mat_(arma::Mat<float>& matrix) {
+  return matrix.transform( [](double x) { return 1.0 / (1.0 + std::exp(-x)); } );
 }
 
-float Model::dsigmoid_(float x) {
-  return x * (1.0 - x);
+arma::Mat<float> Model::dsigmoid_mat_(arma::Mat<float>& matrix) {
+  return matrix.transform( [](double x) { return x * (1.0 - x); } );
 }
