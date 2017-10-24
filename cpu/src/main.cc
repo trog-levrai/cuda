@@ -1,5 +1,7 @@
-#include <iostream>
-#include <armadillo>
+# include <iostream>
+# include <armadillo>
+
+# include "model.hh"
 
 int main() {
 
