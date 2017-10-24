@@ -13,6 +13,4 @@ int main() {
   A = {{0, 0}};
 
   std::cout << M.forward(A) << std::endl;
-
-  return 0;
 }
