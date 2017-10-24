@@ -33,3 +33,12 @@ void Model::add(size_t output_units) {
   size_t input_units = this->W.back().n_cols;
   init_W(input_units + 1, output_units);
 }
+
+arma::Mat<float>& Model::forward(arma::Mat<float>& X) {
+  arma::Mat<float> X_(X);
+  arma::Mat<float> tmp = ones<arma::Mat<float>>(X_.n_rows, 1);
+  X_.insert_cols(X_.n_cols, tmp);
+
+  auto o = X_ * this->W[0];
+  return this->sigmoid_(o);
+}
