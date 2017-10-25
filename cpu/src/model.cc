@@ -51,7 +51,14 @@ arma::Mat<float> Model::forward(const arma::Mat<float>& X) {
 arma::Mat<float> Model::forward_keep(const arma::Mat<float>& X) {
   this->H.clear();
   this->C.clear();
+
   arma::Mat<float> X_c(X);
+  arma::Mat<float> X_(X_c);
+  arma::Mat<float> tmp = arma::ones<arma::Mat<float>>(X_.n_rows, 1);
+  X_.insert_cols(X_.n_cols, tmp);
+
+  this->C.push_back(X_);
+
   for (auto& W_ : this->W)
   {
     arma::Mat<float> X_(X_c);
@@ -68,11 +75,12 @@ arma::Mat<float> Model::forward_keep(const arma::Mat<float>& X) {
 }
 
 std::vector<arma::Mat<float>> Model::get_err(const arma::Mat<float> truth) {
-  auto err0 = (truth - C.back()) * dsigmoid_mat_(H.back());
+  arma::Mat<float> err0 = (truth - C.back()) * dsigmoid_mat_(H.back());
   auto err_vec = std::vector<arma::Mat<float>>();
   err_vec.push_back(err0);
-  for (int i = W.size() - 2; i >= 0; --i) {
-    auto err = dsigmoid_mat_(H[i]) * arma::sum((W[i] * err_vec.back()), 1);
+  for (int i = W.size() - 1; i >= 0; --i) {
+    arma::Mat<float> tmp = this->W[i] * err_vec.back();
+    arma::Mat<float> err = arma::sum(tmp, 1) * dsigmoid_mat_(H[i]);
     err_vec.push_back(err);
   }
 
@@ -83,7 +91,22 @@ std::vector<arma::Mat<float>> Model::get_err(const arma::Mat<float> truth) {
 void Model::back_propagate(float lambda, const arma::Mat<float> truth) {
   auto err = get_err(truth);
 
-  for (size_t i = 0; i < W.size(); ++i) {
-    W[i] += lambda * err[i] * C[i];
+  for (size_t i = 0; i < this->W.size(); ++i) {
+    std::cout << C[i] << std::endl;
+    std::cout << err[i] << std::endl;
+    this->W[i] += lambda * err[i].t() * this->C[i];
+  }
+}
+
+void Model::train(arma::Mat<float>& X, arma::Mat<float>& y, size_t nb_epoch) {
+  for (;nb_epoch > 0; nb_epoch--)
+  {
+    // TODO SUFFLE DATA
+
+    for (size_t j = 0; j < X.n_rows; j++)
+    {
+      this->forward_keep(X.row(j));
+      this->back_propagate(0.1, y.row(j));
+    }
   }
 }

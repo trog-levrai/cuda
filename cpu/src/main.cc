@@ -5,7 +5,7 @@
 
 int main() {
   Model M;
-  M.add(1, 2);
+  M.add(5, 2);
   M.add(1);
 
   arma::Mat<float> X(4, 2);
@@ -17,6 +17,8 @@ int main() {
   arma::Mat<float> y(1, 4);
   y = {{0, 1, 1, 0}};
   y = y.t();
+
+  M.train(X, y, 3);
 
   std::cout << M.forward(X) << std::endl;
   std::cout << y << std::endl;
