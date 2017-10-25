@@ -90,10 +90,9 @@ std::vector<arma::Mat<float>> Model::get_err(const arma::Mat<float> truth) {
     std::cout << "err" << std::endl;
     std::cout << err_vec.back().t() << std::endl;*/
     arma::Mat<float> tmp = this->W[i + 1] * err_vec.back().t();
+    arma::Mat<float> aux = tmp.rows(0, tmp.n_rows - 2);
 
-    arma::Mat<float> tt = arma::sum(tmp, 0);
-
-    arma::Mat<float> err = tt * dsigmoid_mat_(H[i]);
+    arma::Mat<float> err = aux.t() % dsigmoid_mat_(H[i]);
 
     err_vec.push_back(err);
   }
@@ -118,16 +117,21 @@ void Model::back_propagate(float lambda, const arma::Mat<float> truth) {
 void Model::train(arma::Mat<float>& X, arma::Mat<float>& y, size_t nb_epoch) {
   for (size_t i = 0; i < nb_epoch; i++)
   {
-    std::cout << "============ EPOCH " << i << "\n";
-    // TODO SUFFLE DATA
+    auto shuffle = std::vector<size_t>();
+    for (size_t i = 0; i < X.n_rows; ++i) {
+      shuffle.push_back(i);
+    }
+    std::random_shuffle(shuffle.begin(), shuffle.end());
 
-    for (size_t j = 0; j < X.n_rows; j++)
+    std::cout << "============ EPOCH " << i << "\n";
+
+    for (size_t j = 0; j < shuffle.size(); ++j)
     {
       //std::cout << j << "\n";
       //std::cout << X.row(j) << "\n";
-      this->forward_keep(X.row(j));
+      this->forward_keep(X.row(shuffle[j]));
       //std::cout << y.row(j) << "\n";
-      this->back_propagate(1, y.row(j));
+      this->back_propagate(1, y.row(shuffle[j]));
     }
     //std::cout << this->forward(X) << "\n";
   }

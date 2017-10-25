@@ -16,11 +16,11 @@ int main() {
        {1, 1}};
 
   arma::Mat<float> y(2, 4);
-  y = {{-1, -1, -1, -1},
-       {1, 1, 1, 1}};
+  y = {{-1, 1, 1, -1},
+       {1, -1, -1, 1}};
   y = y.t();
 
-  M.train(X, y, 1);
+  M.train(X, y, 10);
 
   std::cout << M.forward(X) << std::endl;
   std::cout << y << std::endl;
