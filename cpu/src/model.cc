@@ -2,12 +2,14 @@
 
 # include <cmath>
 # include <stdexcept>
+# include <assert.h>
 
 void Model::init_W(size_t m, size_t n) {
   arma::Mat<float> M;
   M.randu(m, n);
-  //float r = 4.0 * sqrt(6.0 / (m + n));
-  //M *= r;
+  M -= 0.5;
+  float r = 4.0 * sqrt(6.0 / (m + n));
+  M *= r;
   this->W.emplace_back(M);
 }
 
@@ -66,7 +68,7 @@ arma::Mat<float> Model::forward_keep(const arma::Mat<float>& X) {
     X_.insert_cols(X_.n_cols, tmp);
     this->C.push_back(arma::Mat<float>(X_));
 
-    arma::Mat<float> o = X_ * W_;
+    arma::Mat<float> o(X_ * W_);
 
     this->H.push_back(arma::Mat<float>(o));
 
@@ -78,21 +80,18 @@ arma::Mat<float> Model::forward_keep(const arma::Mat<float>& X) {
 }
 
 std::vector<arma::Mat<float>> Model::get_err(const arma::Mat<float> truth) {
-  arma::Mat<float> err0 = (truth - C.back()) % dsigmoid_mat_(H.back());
+  arma::Mat<float> cp(H.back());
+  arma::Mat<float> err0 = (truth - C.back()) % dsigmoid_mat_(cp);
 
   auto err_vec = std::vector<arma::Mat<float>>();
   err_vec.push_back(err0);
 
-
   for (int i = W.size() - 2; i >= 0; --i) {
-    /*std::cout << "W+1" << std::endl;
-    std::cout << this->W[i+1] << std::endl;
-    std::cout << "err" << std::endl;
-    std::cout << err_vec.back().t() << std::endl;*/
     arma::Mat<float> tmp = this->W[i + 1] * err_vec.back().t();
-    arma::Mat<float> aux = tmp.rows(0, tmp.n_rows - 2);
+    arma::Mat<float> aux = tmp.rows(0, tmp.n_rows - 2); //TOOO
 
-    arma::Mat<float> err = aux.t() % dsigmoid_mat_(H[i]);
+    arma::Mat<float> cp2(H[i]);
+    arma::Mat<float> err = aux.t() % dsigmoid_mat_(cp2);
 
     err_vec.push_back(err);
   }
@@ -105,16 +104,19 @@ void Model::back_propagate(float lambda, const arma::Mat<float> truth) {
   auto err = get_err(truth);
 
   for (size_t i = 0; i < this->W.size(); ++i) {
-    //std::cout << i << std::endl;
-    //std::cout << W[i] << std::endl;
     arma::Mat<float> tmp = (lambda * err[i].t() * this->C[i]);
-    std::cout << tmp << std::endl;
     this->W[i] += tmp.t();
-    //std::cout << W[i] << std::endl;
   }
 }
 
-void Model::train(arma::Mat<float>& X, arma::Mat<float>& y, size_t nb_epoch) {
+float Model::loss(const arma::Mat<float>& X, const arma::Mat<float>& y) {
+  arma::Mat<float> out = this->forward(X);
+  out = (out - y);
+  out = out % out;
+  return arma::accu(out) / y.n_rows;
+}
+
+void Model::train(arma::Mat<float>& X, arma::Mat<float>& y, size_t nb_epoch, float lr) {
   for (size_t i = 0; i < nb_epoch; i++)
   {
     auto shuffle = std::vector<size_t>();
@@ -127,12 +129,15 @@ void Model::train(arma::Mat<float>& X, arma::Mat<float>& y, size_t nb_epoch) {
 
     for (size_t j = 0; j < shuffle.size(); ++j)
     {
-      //std::cout << j << "\n";
-      //std::cout << X.row(j) << "\n";
       this->forward_keep(X.row(shuffle[j]));
-      //std::cout << y.row(j) << "\n";
-      this->back_propagate(1, y.row(shuffle[j]));
+      this->back_propagate(lr, y.row(shuffle[j]));
     }
-    //std::cout << this->forward(X) << "\n";
+
+    std::cout << "Train loss: " << this->loss(X, y) << std::endl;
+    std::cout << std::endl;
   }
+}
+
+void Model::train(arma::Mat<float>& X, arma::Mat<float>& y, size_t nb_epoch) {
+  this->train(X, y, nb_epoch, 0.1);
 }

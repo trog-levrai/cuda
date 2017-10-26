@@ -11,8 +11,10 @@ class Model {
     void add(size_t output_units);
     void add(size_t output_units, size_t input_units);
     arma::Mat<float>& predict(arma::Mat<float>& X);
+    void train(arma::Mat<float>& X, arma::Mat<float>& y, size_t nb_epoch, float lr);
     void train(arma::Mat<float>& X, arma::Mat<float>& y, size_t nb_epoch);
     arma::Mat<float> forward(const arma::Mat<float>& X);
+    float loss(const arma::Mat<float>& X, const arma::Mat<float>& y);
 
   private:
     void init_W(size_t input, size_t output);
