@@ -13,12 +13,12 @@ void Model::init_W(size_t m, size_t n) {
   this->W.emplace_back(M);
 }
 
-mat Model::activate(mat& matrix, const std::string func) {
-  return matrix.transform( map_func[func]->f() );
+const mat Model::activate(mat& matrix, const std::string func) {
+  return matrix.transform( map_func.at(func)->f() );
 }
 
-mat Model::d_activate(mat& matrix, const std::string func) {
-  return matrix.transform( map_func[func]->d_f() );
+const mat Model::d_activate(mat& matrix, const std::string func) {
+  return matrix.transform( map_func.at(func)->d_f() );
 }
 
 void Model::add(size_t output_units, size_t input_units) {
