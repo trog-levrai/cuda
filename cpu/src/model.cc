@@ -13,33 +13,45 @@ void Model::init_W(size_t m, size_t n) {
   this->W.emplace_back(M);
 }
 
-arma::Mat<float> Model::sigmoid_mat_(arma::Mat<float>& matrix) {
-  return matrix.transform( [](double x) { return (std::exp(2 * x) - 1) / (std::exp(2 * x) + 1); } );
+arma::Mat<float> Model::activate(arma::Mat<float>& matrix, const std::string func) {
+  return matrix.transform( map_func[func]->f() );
 }
 
-arma::Mat<float> Model::dsigmoid_mat_(arma::Mat<float>& matrix) {
-  return matrix.transform( [](double x) {
-      float h = (std::exp(2 * x) - 1) / (std::exp(2 * x) + 1);
-      return 1 - h * h; } );
+arma::Mat<float> Model::d_activate(arma::Mat<float>& matrix, const std::string func) {
+  return matrix.transform( map_func[func]->d_f() );
 }
 
 void Model::add(size_t output_units, size_t input_units) {
+  this->add(output_units, input_units, "tan_h");
+}
+
+
+void Model::add(size_t output_units) {
+  this->add(output_units, "tan_h");
+}
+
+void Model::add(size_t output_units, size_t input_units, std::string activ) {
   if (!this->W.empty())
     throw std::runtime_error("An input layer has already been add");
 
   init_W(input_units + 1, output_units);
+
+  this->activate_vec.push_back(activ);
 }
 
-void Model::add(size_t output_units) {
+void Model::add(size_t output_units, std::string activ) {
   if (this->W.empty())
     throw std::runtime_error("The model has no input layer");
 
   size_t input_units = this->W.back().n_cols;
   init_W(input_units + 1, output_units);
+
+  this->activate_vec.push_back("tan_h");
 }
 
-arma::Mat<float> Model::forward(const arma::Mat<float>& X) {
+const arma::Mat<float> Model::forward(const arma::Mat<float>& X) {
   arma::Mat<float> X_c(X);
+  size_t i = 0;
   for (auto& W_ : this->W)
   {
     arma::Mat<float> X_(X_c);
@@ -47,7 +59,8 @@ arma::Mat<float> Model::forward(const arma::Mat<float>& X) {
     X_.insert_cols(X_.n_cols, tmp);
 
     arma::Mat<float> o = X_ * W_;
-    X_c = this->sigmoid_mat_(o);
+    X_c = this->activate(o, this->activate_vec[i]);
+    ++i;
   }
   return X_c;
 }
@@ -61,6 +74,7 @@ arma::Mat<float> Model::forward_keep(const arma::Mat<float>& X) {
   arma::Mat<float> tmp = arma::ones<arma::Mat<float>>(X_.n_rows, 1);
   X_.insert_cols(X_.n_cols, tmp);
 
+  size_t i = 0;
   for (auto& W_ : this->W)
   {
     arma::Mat<float> X_(X_c);
@@ -72,8 +86,8 @@ arma::Mat<float> Model::forward_keep(const arma::Mat<float>& X) {
 
     this->H.push_back(arma::Mat<float>(o));
 
-    X_c = this->sigmoid_mat_(o);
-
+    X_c = this->activate(o, this->activate_vec[i]);
+    ++i;
   }
   this->C.push_back(X_c);
   return X_c;
@@ -81,7 +95,7 @@ arma::Mat<float> Model::forward_keep(const arma::Mat<float>& X) {
 
 std::vector<arma::Mat<float>> Model::get_err(const arma::Mat<float> truth) {
   arma::Mat<float> cp(H.back());
-  arma::Mat<float> err0 = (truth - C.back()) % dsigmoid_mat_(cp);
+  arma::Mat<float> err0 = (truth - C.back()) % this->d_activate(cp, this->activate_vec.back());
 
   auto err_vec = std::vector<arma::Mat<float>>();
   err_vec.push_back(err0);
@@ -91,7 +105,7 @@ std::vector<arma::Mat<float>> Model::get_err(const arma::Mat<float> truth) {
     arma::Mat<float> aux = tmp.rows(0, tmp.n_rows - 2); //TOOO
 
     arma::Mat<float> cp2(H[i]);
-    arma::Mat<float> err = aux.t() % dsigmoid_mat_(cp2);
+    arma::Mat<float> err = aux.t() % this->d_activate(cp2, this->activate_vec[i]);
 
     err_vec.push_back(err);
   }
@@ -109,14 +123,17 @@ void Model::back_propagate(float lambda, const arma::Mat<float> truth) {
   }
 }
 
-float Model::loss(const arma::Mat<float>& X, const arma::Mat<float>& y) {
+const float Model::loss(const arma::Mat<float>& X, const arma::Mat<float>& y) {
   arma::Mat<float> out = this->forward(X);
   out = (out - y);
   out = out % out;
   return arma::accu(out) / y.n_rows;
 }
 
-void Model::train(arma::Mat<float>& X, arma::Mat<float>& y, size_t nb_epoch, float lr) {
+void Model::train(const arma::Mat<float>& X, const arma::Mat<float>& y, size_t nb_epoch, float lr) {
+  if (this->W.empty())
+    throw std::runtime_error("An model has no input layer");
+
   for (size_t i = 0; i < nb_epoch; i++)
   {
     auto shuffle = std::vector<size_t>();
@@ -138,6 +155,6 @@ void Model::train(arma::Mat<float>& X, arma::Mat<float>& y, size_t nb_epoch, flo
   }
 }
 
-void Model::train(arma::Mat<float>& X, arma::Mat<float>& y, size_t nb_epoch) {
+void Model::train(const arma::Mat<float>& X, const arma::Mat<float>& y, size_t nb_epoch) {
   this->train(X, y, nb_epoch, 0.1);
 }
