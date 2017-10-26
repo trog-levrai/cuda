@@ -5,7 +5,7 @@
 # include <assert.h>
 
 void Model::init_W(size_t m, size_t n) {
-  arma::Mat<float> M;
+  mat M;
   M.randu(m, n);
   M -= 0.5;
   float r = 4.0 * sqrt(6.0 / (m + n));
@@ -13,11 +13,11 @@ void Model::init_W(size_t m, size_t n) {
   this->W.emplace_back(M);
 }
 
-arma::Mat<float> Model::activate(arma::Mat<float>& matrix, const std::string func) {
+mat Model::activate(mat& matrix, const std::string func) {
   return matrix.transform( map_func[func]->f() );
 }
 
-arma::Mat<float> Model::d_activate(arma::Mat<float>& matrix, const std::string func) {
+mat Model::d_activate(mat& matrix, const std::string func) {
   return matrix.transform( map_func[func]->d_f() );
 }
 
@@ -49,42 +49,42 @@ void Model::add(size_t output_units, std::string activ) {
   this->activate_vec.push_back("tan_h");
 }
 
-const arma::Mat<float> Model::forward(const arma::Mat<float>& X) {
-  arma::Mat<float> X_c(X);
+const mat Model::forward(const mat& X) {
+  mat X_c(X);
   size_t i = 0;
   for (auto& W_ : this->W)
   {
-    arma::Mat<float> X_(X_c);
-    arma::Mat<float> tmp = arma::ones<arma::Mat<float>>(X_.n_rows, 1);
+    mat X_(X_c);
+    mat tmp = arma::ones<mat>(X_.n_rows, 1);
     X_.insert_cols(X_.n_cols, tmp);
 
-    arma::Mat<float> o = X_ * W_;
+    mat o = X_ * W_;
     X_c = this->activate(o, this->activate_vec[i]);
     ++i;
   }
   return X_c;
 }
 
-arma::Mat<float> Model::forward_keep(const arma::Mat<float>& X) {
+mat Model::forward_keep(const mat& X) {
   this->H.clear();
   this->C.clear();
 
-  arma::Mat<float> X_c(X);
-  arma::Mat<float> X_(X_c);
-  arma::Mat<float> tmp = arma::ones<arma::Mat<float>>(X_.n_rows, 1);
+  mat X_c(X);
+  mat X_(X_c);
+  mat tmp = arma::ones<mat>(X_.n_rows, 1);
   X_.insert_cols(X_.n_cols, tmp);
 
   size_t i = 0;
   for (auto& W_ : this->W)
   {
-    arma::Mat<float> X_(X_c);
-    arma::Mat<float> tmp = arma::ones<arma::Mat<float>>(X_.n_rows, 1);
+    mat X_(X_c);
+    mat tmp = arma::ones<mat>(X_.n_rows, 1);
     X_.insert_cols(X_.n_cols, tmp);
-    this->C.push_back(arma::Mat<float>(X_));
+    this->C.push_back(mat(X_));
 
-    arma::Mat<float> o(X_ * W_);
+    mat o(X_ * W_);
 
-    this->H.push_back(arma::Mat<float>(o));
+    this->H.push_back(mat(o));
 
     X_c = this->activate(o, this->activate_vec[i]);
     ++i;
@@ -93,19 +93,19 @@ arma::Mat<float> Model::forward_keep(const arma::Mat<float>& X) {
   return X_c;
 }
 
-std::vector<arma::Mat<float>> Model::get_err(const arma::Mat<float> truth) {
-  arma::Mat<float> cp(H.back());
-  arma::Mat<float> err0 = (truth - C.back()) % this->d_activate(cp, this->activate_vec.back());
+std::vector<mat> Model::get_err(const mat truth) {
+  mat cp(H.back());
+  mat err0 = (truth - C.back()) % this->d_activate(cp, this->activate_vec.back());
 
-  auto err_vec = std::vector<arma::Mat<float>>();
+  auto err_vec = std::vector<mat>();
   err_vec.push_back(err0);
 
   for (int i = W.size() - 2; i >= 0; --i) {
-    arma::Mat<float> tmp = this->W[i + 1] * err_vec.back().t();
-    arma::Mat<float> aux = tmp.rows(0, tmp.n_rows - 2); //TOOO
+    mat tmp = this->W[i + 1] * err_vec.back().t();
+    mat aux = tmp.rows(0, tmp.n_rows - 2);
 
-    arma::Mat<float> cp2(H[i]);
-    arma::Mat<float> err = aux.t() % this->d_activate(cp2, this->activate_vec[i]);
+    mat cp2(H[i]);
+    mat err = aux.t() % this->d_activate(cp2, this->activate_vec[i]);
 
     err_vec.push_back(err);
   }
@@ -114,23 +114,23 @@ std::vector<arma::Mat<float>> Model::get_err(const arma::Mat<float> truth) {
   return err_vec;
 }
 
-void Model::back_propagate(float lambda, const arma::Mat<float> truth) {
+void Model::back_propagate(float lambda, const mat truth) {
   auto err = get_err(truth);
 
   for (size_t i = 0; i < this->W.size(); ++i) {
-    arma::Mat<float> tmp = (lambda * err[i].t() * this->C[i]);
+    mat tmp = (lambda * err[i].t() * this->C[i]);
     this->W[i] += tmp.t();
   }
 }
 
-const float Model::loss(const arma::Mat<float>& X, const arma::Mat<float>& y) {
-  arma::Mat<float> out = this->forward(X);
+const float Model::loss(const mat& X, const mat& y) {
+  mat out = this->forward(X);
   out = (out - y);
   out = out % out;
   return arma::accu(out) / y.n_rows;
 }
 
-void Model::train(const arma::Mat<float>& X, const arma::Mat<float>& y, size_t nb_epoch, float lr) {
+void Model::train(const mat& X, const mat& y, size_t nb_epoch, float lr) {
   if (this->W.empty())
     throw std::runtime_error("An model has no input layer");
 
@@ -155,6 +155,6 @@ void Model::train(const arma::Mat<float>& X, const arma::Mat<float>& y, size_t n
   }
 }
 
-void Model::train(const arma::Mat<float>& X, const arma::Mat<float>& y, size_t nb_epoch) {
+void Model::train(const mat& X, const mat& y, size_t nb_epoch) {
   this->train(X, y, nb_epoch, 0.1);
 }
