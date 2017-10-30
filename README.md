@@ -18,5 +18,5 @@ You can find an mnist example by compiling the main.cc file:
 $ cd cpu/; make;
 
 ## Requirements
-cuda, amrmadillo, cubla
+cuda, amrmadillo, cubla <br />
 cxx = c++14
