@@ -13,10 +13,13 @@ Model.forward(X) -- Forward propagation <br />
 
 ## Examples
 
-You can find an mnist example by compiling the main.cc file:
+You can find an mnist example by compiling the main.cc file in the cpu/ directory
 
-$ cd cpu/; make;
+```shell
+make check
+```
 
 ## Requirements
-cuda, amrmadillo, cubla <br />
-cxx = c++14
+For CPU version armadillo with BLAS.<br />
+cuda, cublas.<br />
+CXX = c++14
