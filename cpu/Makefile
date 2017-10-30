@@ -1,5 +1,5 @@
 CPP=g++
-SRC=src/main.cc src/model.cc
+SRC=src/main.cc src/model.cc src/mnist.cc
 BIN=main
 CPPFLAGS=-std=c++14 -g -DARMA_DONT_USE_WRAPPER -lblas -llapack -fopenmp
 
@@ -11,3 +11,5 @@ check: all
 
 clean:
 	$(RM) $(BIN)
+
+.PHONY: clean
