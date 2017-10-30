@@ -17,7 +17,7 @@ int Mnist::ReverseInt (int i)
   return((int) ch1 << 24) + ((int)ch2 << 16) + ((int)ch3 << 8) + ch4;
 }
 
-void Mnist::read_Mnist(std::string filename, std::vector<arma::mat> &vec){
+void Mnist::read_Mnist(std::string filename, std::vector<mat> &vec){
   std::ifstream file (filename, std::ios::binary);
   if (file.is_open())
   {
@@ -35,14 +35,14 @@ void Mnist::read_Mnist(std::string filename, std::vector<arma::mat> &vec){
     n_cols = ReverseInt(n_cols);
     for (int i = 0; i < number_of_images; ++i)
     {
-      arma::mat tp(n_rows, n_cols);
+      mat tp(n_rows, n_cols);
       for (int r = 0; r < n_rows; ++r)
       {
         for (int c = 0; c < n_cols; ++c)
         {
           unsigned char temp = 0;
           file.read((char*) &temp, sizeof (temp));
-          tp(r, c) = (double) temp;
+          tp(r, c) = ((float) temp / 255.0);
         }
       }
       vec.push_back(tp);
@@ -67,7 +67,7 @@ void Mnist::read_Mnist_Label(std::string filename, arma::colvec &vec)
     {
       unsigned char temp = 0;
       file.read((char*) &temp, sizeof (temp));
-      vec(i)= (double)temp;
+      vec(i)= (float)temp;
     }
   }
 }
