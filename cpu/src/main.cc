@@ -9,7 +9,7 @@ int main() {
 
   std::vector<mat> train_data;
   Mnist::read_Mnist(filename, train_data);
-  
+
   std::string label_file = "../data/train-labels-idx1-ubyte";
   arma::colvec train_label = arma::zeros<arma::colvec>(train_data.size());
   Mnist::read_Mnist_Label(label_file, train_label);
@@ -28,7 +28,7 @@ int main() {
   M.add(40, 784, "relu");
   M.add(10, "relu");
 
-  M.train(X, y, 20, 0.01);
+  M.train(X, y, 100, 0.01);
   mat out = M.forward(X);
 
   mat t(train_data.size(), 1);
@@ -47,8 +47,27 @@ int main() {
   float acc = 0;
   for (size_t i = 0; i < train_data.size(); ++i)
     acc = t(i, 0) == train_label(i) ? acc + 1 : acc;
-  
+
   std::cout << "Accuracy= " << acc / train_data.size() << "\n";
+  /*
+     Model M;
+     M.add(3, 2);
+     M.add(1);
+
+     arma::Mat<float> X(4, 2);
+     X = {{0, 0},
+     {0, 1},
+     {1, 0},
+     {1, 1}};
+
+     arma::Mat<float> y(1, 4);
+     y = {{1, 0, 0, 1}};
+     y = y.t();
+
+     M.train(X, y, 400, 0.1);
+
+     std::cout << M.forward(X) << std::endl;
+     std::cout << y << std::endl;*/
 
   return 0;
 }
