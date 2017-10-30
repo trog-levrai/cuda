@@ -25,6 +25,8 @@ class Model {
     void add(size_t output_units, std::string activ);
     void add(size_t output_units, size_t input_units, std::string activ);
 
+    void add_max_POOL();
+
     void train(const mat& X, const mat& y, size_t nb_epoch, float lr);
     void train(const mat& X, const mat& y, size_t nb_epoch);
     const mat forward(const mat& X);
@@ -42,6 +44,7 @@ class Model {
     void back_propagate(float, const mat);
 
     std::vector<std::string> activate_vec;
+    std::vector<std::string> type;
 
     std::vector<mat> W;
     std::vector<mat> H;
