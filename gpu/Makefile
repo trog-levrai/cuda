@@ -1,5 +1,5 @@
 CPP=nvcc --std=c++11
-SRC=src/main.cc src/model.cc src/mnist.cc src/cuda_matrix.cc src/matrix_helper.cu
+SRC=src/main.cc src/cuda_matrix.cu src/matrix_helper.cu
 BIN=main
 CPPFLAGS=-lcuda
 

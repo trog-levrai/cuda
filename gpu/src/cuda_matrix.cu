@@ -5,16 +5,16 @@ CudaMatrix::~CudaMatrix() {
 }
 
 CudaMatrix::CudaMatrix(cublasHandle_t handle, size_t M, size_t N, const float* a_h) {
-  cublasError_t cudaStat;
+  cudaError_t cudaStat;
   cublasStatus_t stat;
   this->handle_ = handle;
   this->M_ = M;
   this->N_ = N;
-  cudaStat = cudaMalloc ((void**)&a_d_, M * N * sizeof (*a));
+  cudaStat = cudaMalloc ((void**)&a_d_, M * N * sizeof (float));
   if (cudaStat != cudaSuccess)
     throw std::runtime_error("Device memory allocation failed");
 
-  stat = cublasSetMatrix (M, N, sizeof (*a_h), a, M, a_d_, M);
+  stat = cublasSetMatrix (M, N, sizeof (float), a_h, M, a_d_, M);
   if (stat != CUBLAS_STATUS_SUCCESS) {
     cudaFree(a_d_);
     cublasDestroy(handle);
@@ -23,25 +23,25 @@ CudaMatrix::CudaMatrix(cublasHandle_t handle, size_t M, size_t N, const float* a
 }
 
 CudaMatrix::CudaMatrix(cublasHandle_t handle, size_t M, size_t N) {
-  cublasError_t cudaStat;
+  cudaError_t cudaStat;
   this->handle_ = handle;
   this->M_ = M;
   this->N_ = N;
-  cudaStat = cudaMalloc ((void**)&a_d_, M * N * sizeof (*a));
+  cudaStat = cudaMalloc ((void**)&a_d_, M * N * sizeof (float));
   if (cudaStat != cudaSuccess)
     throw std::runtime_error("Device memory allocation failed");
 }
 
-CudaMatrix::CudaMatrix(CudaMatrix& m) {
-  cublasError_t cudaStat;
+CudaMatrix::CudaMatrix(const CudaMatrix& m) {
+  cudaError_t cudaStat;
   this->handle_ = m.handle_;
   this->M_ = m.M_;
   this->N_ = m.N_;
-  cudaStat = cudaMalloc ((void**)&a_d_, M * N * sizeof (*a));
+  cudaStat = cudaMalloc ((void**)&a_d_, m.M_ * m.N_ * sizeof (float));
   if (cudaStat != cudaSuccess)
     throw std::runtime_error("Device memory allocation failed");
 
-  cudaStat = cudaMemcpy(this->a_d_, m.a_d_, M * N * sizeof (*a), cudaMemcpyDeviceToDevice);
+  cudaStat = cudaMemcpy(this->a_d_, m.a_d_, m.M_ * m.N_ * sizeof (float), cudaMemcpyDeviceToDevice);
   if (cudaStat != cudaSuccess)
     throw std::runtime_error("Device Memcpy failed");
 }
@@ -128,7 +128,7 @@ CudaMatrix& CudaMatrix::operator+(float m) {
 
 CudaMatrix& CudaMatrix::t() const {
   CudaMatrix c = CudaMatrix(handle_, M_, m.N_);
-  cudaStatus_t stat = cublasSgeam(handle_, CUBLAS_OP_T, CUBLAS_OP_T, M_, N_, 1., a_d_, N_, nullptr, N_, 0., c.a_d_, N_);
+  cublasStatus_t stat = cublasSgeam(handle_, CUBLAS_OP_T, CUBLAS_OP_T, M_, N_, 1., a_d_, N_, nullptr, N_, 0., c.a_d_, N_);
   if (stat != CUBLAS_STATUS_SUCCESS)
     throw std::runtime_error("Matrix transposition failed");
   return c;
