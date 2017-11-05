@@ -1,4 +1,4 @@
-#include "cuda_matrix.hh"
+#include "cuda_matrix.cuh"
 
 CudaMatrix::~CudaMatrix() {
   cudaFree(a_d_);
@@ -107,7 +107,7 @@ CudaMatrix& CudaMatrix::operator+(float m) {
   cudaError_t stat = scalarAddKernel<<<DimGrid,DimBlock>>>(d_n_, m, c.m_n_, M_ * N_);
   if (stat != cudaSuccess)
     throw std::runtime_error("Addition with scalar failed");
-  stat = cudaDeviceSynchronize();    
+  stat = cudaDeviceSynchronize();
   if (stat != cudaSuccess)
     throw std::runtime_error("Device synchrnization failed");
   return c;
@@ -120,7 +120,7 @@ CudaMatrix& CudaMatrix::operator+(float m) {
   cudaError_t stat = scalarAddKernel<<<DimGrid,DimBlock>>>(d_n_, -m, c.m_n_, M_ * N_);
   if (stat != cudaSuccess)
     throw std::runtime_error("Addition with scalar failed");
-  stat = cudaDeviceSynchronize();    
+  stat = cudaDeviceSynchronize();
   if (stat != cudaSuccess)
     throw std::runtime_error("Device synchrnization failed");
   return c;
@@ -132,4 +132,20 @@ CudaMatrix& CudaMatrix::t() const {
   if (stat != CUBLAS_STATUS_SUCCESS)
     throw std::runtime_error("Matrix transposition failed");
   return c;
+}
+
+CudaMatrix& CudaMatrix::operator%(const CudaMatrix& m) {
+  CudaMatrix c = CudaMatrix(handle_, M_, m.N_);
+  cublasStatus_t stat = vecMulKernel(d_n_, m.d_n_, c.m_n_, M_ * N_);
+  if (cudaStat != cudaSuccess)
+    throw std::runtime_error("Device memory allocation failed");
+  return c;
+}
+
+CudaMatrix& CudaMatrix::transform(std::function<float (float)> f) {
+  dim3 DimGrid((this->M_ * this->N_ - 1) / 256 + 1, 1, 1);
+  dim3 DimBlock(256, 1, 1);
+  matTransformKernel<<<DimGrid,DimBlock>>>(a_d_, f, this->M_ * this->N_)
+  cudaDeviceSynchronize();
+  return *this;
 }

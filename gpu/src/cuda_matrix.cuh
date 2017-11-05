@@ -2,6 +2,7 @@
 
 # include <stdexcept>
 # include <cuda_runtime.h>
+# include <cuda.h>
 # include "cublas_v2.h"
 # include "matrix_helper.cuh"
 
@@ -45,6 +46,9 @@ class CudaMatrix {
 
     //Returns the transpose of the current matrix
     CudaMatrix& t() const;
+
+    //Transform and return a matrix by a func
+    CudaMatrix& transform(std::function<float (float)> f);
 
   private:
     float* a_d_;
