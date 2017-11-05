@@ -2,6 +2,7 @@
 
 # include <cmath>
 # include <iostream>
+# include <functional>
 
 struct activation_func {
   virtual const std::function<float (float)> f() = 0;
