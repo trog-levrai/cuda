@@ -106,7 +106,7 @@ CudaMatrix CudaMatrix::operator+(float m) {
 }
 
 CudaMatrix CudaMatrix::t() const {
-  CudaMatrix c = CudaMatrix(handle_, M_, N_);
+  CudaMatrix c = CudaMatrix(handle_, N_, M_);
   float alpha = 1.;
   float beta = 0.;
   cublasStatus_t stat = cublasSgeam(handle_, CUBLAS_OP_T, CUBLAS_OP_T, M_, N_, &alpha, a_d_, N_, nullptr, &beta, M_, c.a_d_, N_);
