@@ -44,7 +44,7 @@ class CudaMatrix {
     void randomize();
 
     //Returns the transpose of the current matrix
-    CudaMatrix& t();
+    CudaMatrix& t() const;
 
   private:
     float* a_d_;
