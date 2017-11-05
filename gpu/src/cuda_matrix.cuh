@@ -52,7 +52,8 @@ class CudaMatrix {
 
   private:
     float* a_d_;
+    cublasHandle_t handle_;
+  public:
     size_t M_;
     size_t N_;
-    cublasHandle_t handle_;
 };
