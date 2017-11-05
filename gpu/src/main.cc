@@ -1,6 +1,6 @@
 #include <iostream>
-#include <armadillo>
 
+#include "cuda_matrix.hh"
 #include "model.hh"
 #include "mnist.hh"
 
@@ -9,7 +9,7 @@ int main() {
 
   std::vector<mat> train_data;
   Mnist::read_Mnist(filename, train_data);
-  
+
   std::string label_file = "../data/train-labels-idx1-ubyte";
   arma::colvec train_label = arma::zeros<arma::colvec>(train_data.size());
   Mnist::read_Mnist_Label(label_file, train_label);
