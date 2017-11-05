@@ -21,31 +21,31 @@ class CudaMatrix {
     CudaMatrix(const CudaMatrix&);
 
     //Dot product of matrix
-    CudaMatrix& operator*(const CudaMatrix&);
+    CudaMatrix operator*(const CudaMatrix&);
 
     //Multiplication with a scalar
-    CudaMatrix& operator*(float);
+    CudaMatrix operator*(float);
 
     //Cell-wise multiplication
-    CudaMatrix& operator%(const CudaMatrix&);
+    CudaMatrix operator%(const CudaMatrix&);
 
     //Cell-wise substraction
-    CudaMatrix& operator-(const CudaMatrix&);
+    CudaMatrix operator-(const CudaMatrix&);
 
     //Cell-wise addition
-    CudaMatrix& operator+(const CudaMatrix&);
+    CudaMatrix operator+(const CudaMatrix&);
 
     //Substraction of a scalar
-    CudaMatrix& operator-(float);
+    CudaMatrix operator-(float);
 
     //Addition of a scalar
-    CudaMatrix& operator+(float);
+    CudaMatrix operator+(float);
 
     //Randomly fills the matrix
     void randomize();
 
     //Returns the transpose of the current matrix
-    CudaMatrix& t() const;
+    CudaMatrix t() const;
 
     //Transform and return a matrix by a func
     CudaMatrix& transform(std::function<float (float)> f);
