@@ -1,7 +1,5 @@
-reshape(n_rows * n_cols, 4);
 arma::ones<mat>(X_.n_rows, 1);
 insert_cols(X_.n_cols, tmp);
-M.randu(m, n);
 arma::accu(out)
 tmp.rows(0, tmp.n_rows - 2);
 X.rows(indices)
