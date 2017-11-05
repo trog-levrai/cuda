@@ -153,3 +153,7 @@ void CudaMatrix::randomize() {
   dim3 DimBlock(256, 1, 1);
   randomizeKernel<<<DimGrid,DimBlock>>>(states, a_d_, M_ * N_);
 }
+
+float CudaMatrix::accu() const {
+  return thrust::reduce(a_d_, a_d_ + M_ * N_);
+}

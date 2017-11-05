@@ -4,6 +4,8 @@
 # include <cuda_runtime.h>
 # include <cuda.h>
 # include <unistd.h>
+# include <thrust/device_vector.h>
+# include <thrust/reduce.h>
 # include "cublas_v2.h"
 # include "matrix_helper.cuh"
 
@@ -50,12 +52,15 @@ class CudaMatrix {
 
     //Transform and return a matrix by a func
     CudaMatrix transform(float (*f)(float));
-    
+
     //Reshape
     CudaMatrix reshape(size_t M, size_t N);
 
     //set mat
     void setMat(float* arr) { a_d_ = arr; };
+
+    //Sums up all the elements of the matrix
+    float accu() const;
 
   private:
     float* a_d_;
