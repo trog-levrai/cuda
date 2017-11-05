@@ -2,7 +2,6 @@
 
 # include <math.h>
 # include <vector>
-# include <armadillo>
 # include <algorithm>
 # include <map>
 # include <string>

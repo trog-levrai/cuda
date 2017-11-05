@@ -1,10 +1,11 @@
 #pragma once
 
-# include <armadillo>
 # include <math.h>
 # include <iostream>
 
-typedef arma::Mat<float> mat;
+# include "cuda_matrix.hh"
+
+typedef CudaMatrix mat;
 
 class Mnist {
   public:
