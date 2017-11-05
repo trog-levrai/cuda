@@ -1,5 +1,15 @@
 #include "cuda_matrix.cuh"
 
+CudaMatrix ones(size_t M, size_t N, cublasHandle_t handle) {
+  float *mat;
+  cudaMalloc((void**)&mat, M * N * sizeof(float));
+  cudaMemset(mat, 1, M * N * sizeof(float));
+
+  CudaMatrix out(handle, M, N);
+  out.setMat(mat);
+  return out;
+}
+
 CudaMatrix::~CudaMatrix() {
   cudaFree(a_d_);
 }

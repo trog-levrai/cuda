@@ -54,6 +54,9 @@ class CudaMatrix {
     //Reshape
     CudaMatrix reshape(size_t M, size_t N);
 
+    //set mat
+    void setMat(float* arr) { a_d_ = arr; };
+
   private:
     float* a_d_;
     cublasHandle_t handle_;
@@ -61,3 +64,5 @@ class CudaMatrix {
     size_t M_;
     size_t N_;
 };
+
+CudaMatrix ones(size_t M, size_t N, cublasHandle_t handle);
