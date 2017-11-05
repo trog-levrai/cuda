@@ -45,7 +45,7 @@ class CudaMatrix {
     void randomize();
 
     //Returns the transpose of the current matrix
-    CudaMatrix& t();
+    CudaMatrix& t() const;
 
     //Transform and return a matrix by a func
     CudaMatrix& transform(std::function<float (float)> f);
