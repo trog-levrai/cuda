@@ -131,3 +131,15 @@ CudaMatrix CudaMatrix::reshape(size_t M, size_t N) {
   out.N_ = N;
   return out;
 }
+
+void CudaMatrix::randomize() {
+  curandState_t* states;
+  cudaError_t cudaStat =cudaMalloc((void**) &states, M_ * N_ * sizeof (curandState_t));
+  if (cudaStat != cudaSuccess)
+    throw std::runtime_error("Device memory allocation failed");
+
+  init<<<M_ * N_, 1>>>(time(0), states);
+  dim3 DimGrid((M_ * N_ - 1)/256 + 1, 1, 1);
+  dim3 DimBlock(256, 1, 1);
+  randomizeKernel<<<DimGrid,DimBlock>>>(states, a_d_, M_ * N_);
+}

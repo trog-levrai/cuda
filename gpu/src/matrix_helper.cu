@@ -24,3 +24,12 @@ __global__ void matTransformKernel(float* A, float (*f)(float), int n) {
   int i = threadIdx.x + blockDim.x * blockIdx.x;
   if (i<n) A[i] = f(A[i]);
 }
+
+__global__ void init(unsigned int seed, curandState_t* states) {
+  curand_init(seed, blockIdx.x, 0, &states[blockIdx.x]);
+}
+
+__global__ void randomizeKernel(curandState_t* states, float* a, int n) {
+  int i = threadIdx.x + blockDim.x * blockIdx.x;
+  if (i<n) a[i] = curand_uniform(&states[i]);
+}
