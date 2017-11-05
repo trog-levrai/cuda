@@ -63,3 +63,11 @@ CudaMatrix& CudaMatrix::operator*(float x) {
     throw std::runtime_error("Device memory allocation failed");
   return c;
 }
+
+CudaMatrix& CudaMatrix::operator%(const CudaMatrix& m) {
+  CudaMatrix c = CudaMatrix(handle_, M_, m.N_);
+  cublasStatus_t stat = vecMulKernel(d_n_, m.d_n_, c.m_n_, M_ * N_);
+  if (cudaStat != cudaSuccess)
+    throw std::runtime_error("Device memory allocation failed");
+  return c;
+}
