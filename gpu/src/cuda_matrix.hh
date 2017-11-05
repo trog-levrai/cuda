@@ -3,6 +3,7 @@
 # include <stdexcept>
 # include <cuda_runtime.h>
 # include "cublas_v2.h"
+# include "matrix_helper.cuh"
 
 class CudaMatrix {
   public:
@@ -11,16 +12,16 @@ class CudaMatrix {
 
     //Constructor that copies host matrix to device
     CudaMatrix(cublasHandle_t handle, size_t M, size_t N, const float* a_h);
-    
+
     //Constructor that creates device matrix
     CudaMatrix(cublasHandle_t handle, size_t M, size_t N);
-    
+
     //Copy constructor
     CudaMatrix(const CudaMatrix&);
-    
+
     //Dot product of matrix
     CudaMatrix& operator*(const CudaMatrix&);
-    
+
     //Multiplication with a scalar
     CudaMatrix& operator*(float);
 
