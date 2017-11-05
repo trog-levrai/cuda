@@ -49,6 +49,9 @@ class CudaMatrix {
 
     //Transform and return a matrix by a func
     CudaMatrix& transform(std::function<float (float)> f);
+    
+    //Reshape
+    CudaMatrix& reshape(size_t M, size_t N);
 
   private:
     float* a_d_;

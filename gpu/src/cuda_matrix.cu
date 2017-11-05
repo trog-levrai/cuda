@@ -122,3 +122,12 @@ CudaMatrix& CudaMatrix::transform(std::function<float (float)> f) {
   cudaDeviceSynchronize();
   return *this;
 }
+
+CudaMatrix& CudaMatrix::reshape(size_t M, size_t N) {
+  if (M_ * N_ != M * N)
+    throw std::runtime_error("Bad Reshape");
+  CudaMatrix out(*this);
+  out.M_ = M;
+  out.N_ = N;
+  return out;
+}
