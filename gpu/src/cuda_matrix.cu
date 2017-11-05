@@ -71,3 +71,12 @@ CudaMatrix& CudaMatrix::operator%(const CudaMatrix& m) {
     throw std::runtime_error("Device memory allocation failed");
   return c;
 }
+
+
+CudaMatrix& CudaMatrix::transform(std::function<float (float)> f) {
+  dim3 DimGrid((this->M_ * this->N_ - 1) / 256 + 1, 1, 1);
+  dim3 DimBlock(256, 1, 1);
+  matTransformKernel<<<DimGrid,DimBlock>>>(a_d_, f, this->M_ * this->N_)
+  cudaDeviceSynchronize();
+  return *this;
+}

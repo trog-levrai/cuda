@@ -2,6 +2,7 @@
 
 # include <stdexcept>
 # include <cuda_runtime.h>
+# include <cuda.h>
 # include "cublas_v2.h"
 # include "matrix_helper.cuh"
 
