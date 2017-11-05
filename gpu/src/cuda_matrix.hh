@@ -45,6 +45,9 @@ class CudaMatrix {
     //Returns the transpose of the current matrix
     CudaMatrix& t();
 
+    //Transform and return a matrix by a func
+    CudaMatrix& transform(std::function<float (float)> f);
+
   private:
     float* a_d_;
     size_t M_;
