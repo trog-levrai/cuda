@@ -129,7 +129,9 @@ CudaMatrix CudaMatrix::transform(float (*f)(float)) {
   dim3 DimGrid((this->M_ * this->N_ - 1) / 256 + 1, 1, 1);
   dim3 DimBlock(256, 1, 1);
   matTransformKernel<<<DimGrid,DimBlock>>>(a_d_, f, this->M_ * this->N_);
-  cudaDeviceSynchronize();
+  cudaError_t stat = cudaDeviceSynchronize();
+  if (stat != cudaSuccess)
+    throw std::runtime_error("Device synchrnization failed");
   return *this;
 }
 
@@ -152,6 +154,17 @@ void CudaMatrix::randomize() {
   dim3 DimGrid((M_ * N_ - 1)/256 + 1, 1, 1);
   dim3 DimBlock(256, 1, 1);
   randomizeKernel<<<DimGrid,DimBlock>>>(states, a_d_, M_ * N_);
+}
+
+CudaMatrix CudaMatrix::rows(size_t start, size_t end) const {
+  CudaMatrix c = CudaMatrix(handle_, start - end, N_);
+  dim3 DimGrid((M_ * N_ - 1)/256 + 1, 1, 1);
+  dim3 DimBlock(256, 1, 1);
+  rowGetter<<<DimGrid,DimBlock>>>(a_d_, c.a_d_, start, end, N_);
+  cudaError_t stat = cudaDeviceSynchronize();
+  if (stat != cudaSuccess)
+    throw std::runtime_error("Device synchrnization failed");
+  return c;
 }
 
 float CudaMatrix::accu() const {
