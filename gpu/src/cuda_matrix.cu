@@ -58,7 +58,7 @@ CudaMatrix::CudaMatrix(const CudaMatrix& m) {
     throw std::runtime_error("Device Memcpy failed");
 }
 
-CudaMatrix CudaMatrix::operator*(const CudaMatrix& m) {
+CudaMatrix CudaMatrix::operator*(const CudaMatrix& m) const {
   CudaMatrix c = CudaMatrix(handle_, M_, m.N_);
   float alpha = 1.;
   float beta = 0.;
@@ -68,7 +68,7 @@ CudaMatrix CudaMatrix::operator*(const CudaMatrix& m) {
   return c;
 }
 
-CudaMatrix CudaMatrix::operator*(float x) {
+CudaMatrix CudaMatrix::operator*(float x) const {
   CudaMatrix c = CudaMatrix(handle_, M_, N_);
   cublasStatus_t stat = cublasSscal(handle_, c.M_ * c.N_, &x, c.a_d_, 1);
   if (stat != CUBLAS_STATUS_SUCCESS)
@@ -76,7 +76,7 @@ CudaMatrix CudaMatrix::operator*(float x) {
   return c;
 }
 
-CudaMatrix CudaMatrix::operator%(const CudaMatrix& m) {
+CudaMatrix CudaMatrix::operator%(const CudaMatrix& m) const {
   CudaMatrix c = CudaMatrix(handle_, M_, m.N_);
   dim3 DimGrid((M_ * N_ - 1)/256 + 1, 1, 1);
   dim3 DimBlock(256, 1, 1);
@@ -84,7 +84,7 @@ CudaMatrix CudaMatrix::operator%(const CudaMatrix& m) {
   return c;
 }
 
-CudaMatrix CudaMatrix::operator+(const CudaMatrix& m) {
+CudaMatrix CudaMatrix::operator+(const CudaMatrix& m) const {
   CudaMatrix c = CudaMatrix(handle_, M_, m.N_);
   dim3 DimGrid((M_ * N_ - 1)/256 + 1, 1, 1);
   dim3 DimBlock(256, 1, 1);
@@ -95,7 +95,7 @@ CudaMatrix CudaMatrix::operator+(const CudaMatrix& m) {
   return c;
 }
 
-CudaMatrix CudaMatrix::operator-(const CudaMatrix& m) {
+CudaMatrix CudaMatrix::operator-(const CudaMatrix& m) const {
   CudaMatrix c = CudaMatrix(handle_, M_, m.N_);
   dim3 DimGrid((M_ * N_ - 1)/256 + 1, 1, 1);
   dim3 DimBlock(256, 1, 1);
@@ -106,7 +106,7 @@ CudaMatrix CudaMatrix::operator-(const CudaMatrix& m) {
   return c;
 }
 
-CudaMatrix CudaMatrix::operator+(float m) {
+CudaMatrix CudaMatrix::operator+(float m) const {
   CudaMatrix c = CudaMatrix(handle_, M_, N_);
   dim3 DimGrid((M_ * N_ - 1)/256 + 1, 1, 1);
   dim3 DimBlock(256, 1, 1);
@@ -131,6 +131,26 @@ CudaMatrix CudaMatrix::transform(float (*f)(float)) {
   dim3 DimGrid((this->M_ * this->N_ - 1) / 256 + 1, 1, 1);
   dim3 DimBlock(256, 1, 1);
   matTransformKernel<<<DimGrid,DimBlock>>>(a_d_, f, this->M_ * this->N_);
+  cudaError_t stat = cudaDeviceSynchronize();
+  if (stat != cudaSuccess)
+    throw std::runtime_error("Device synchrnization failed");
+  return *this;
+}
+
+CudaMatrix CudaMatrix::relu() {
+  dim3 DimGrid((this->M_ * this->N_ - 1) / 256 + 1, 1, 1);
+  dim3 DimBlock(256, 1, 1);
+  matRelu<<<DimGrid,DimBlock>>>(a_d_, this->M_ * this->N_);
+  cudaError_t stat = cudaDeviceSynchronize();
+  if (stat != cudaSuccess)
+    throw std::runtime_error("Device synchrnization failed");
+  return *this;
+}
+
+CudaMatrix CudaMatrix::d_relu() {
+  dim3 DimGrid((this->M_ * this->N_ - 1) / 256 + 1, 1, 1);
+  dim3 DimBlock(256, 1, 1);
+  matDRelu<<<DimGrid,DimBlock>>>(a_d_, this->M_ * this->N_);
   cudaError_t stat = cudaDeviceSynchronize();
   if (stat != cudaSuccess)
     throw std::runtime_error("Device synchrnization failed");

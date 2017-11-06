@@ -5,26 +5,27 @@
 # include <assert.h>
 
 void Model::init_W(size_t m, size_t n) {
-  mat M;
+  mat M(handle_, m, n);
   M.randomize();
-  M -= 0.5;
+  M = M - 0.5;
   float r = 4.0 * sqrt(6.0 / (m + n));
-  M *= r;
+  M = M * r;
   this->W.emplace_back(M);
 }
 
 const mat Model::activate(mat& matrix, const std::string func) {
-  return matrix.transform(map_func.at(func)->f());
+  //return matrix.transform(map_func.at(func)->f());
+  return matrix.relu();
 }
 
 const mat Model::d_activate(mat& matrix, const std::string func) {
-  return matrix.transform(map_func.at(func)->d_f());
+  //return matrix.transform(map_func.at(func)->d_f());
+  return matrix.d_relu();
 }
 
 void Model::add(size_t output_units, size_t input_units) {
   this->add(output_units, input_units, "tan_h");
 }
-
 
 void Model::add(size_t output_units) {
   this->add(output_units, "tan_h");
@@ -44,7 +45,7 @@ void Model::add(size_t output_units, std::string activ) {
   if (this->W.empty())
     throw std::runtime_error("The model has no input layer");
 
-  size_t input_units = this->W.back().n_cols;
+  size_t input_units = this->W.back().N_;
 
   init_W(input_units + 1, output_units);
 
@@ -58,9 +59,9 @@ const mat Model::forward(const mat& X) {
   for (auto& W_ : this->W) {
     if (this->type[i] == "dense") {
       mat X_(X_c);
-      mat tmp = ones(X_.n_rows, 1);
+      mat tmp = ones(X_.N_, 1, handle_);
 
-      X_.insertBias();
+      X_.addBias();
 
       mat o = X_ * W_;
       X_c = this->activate(o, this->activate_vec[i]);
@@ -76,15 +77,15 @@ mat Model::forward_keep(const mat& X) {
 
   mat X_c(X);
   mat X_(X_c);
-  mat tmp = ones(X_.n_rows, 1);
-  X_.insert_cols(X_.n_cols, tmp);
+  mat tmp = ones(X_.N_, 1, handle_);
+  X_.addBias();
 
   size_t i = 0;
   for (auto& W_ : this->W) {
     if (this->type[i] == "dense") {
       mat X_(X_c);
-      mat tmp = arma::ones<mat>(X_.n_rows, 1);
-      X_.insert_cols(X_.n_cols, tmp);
+      mat tmp = ones(X_.N_, 1, handle_);
+      X_.addBias();
       this->C.push_back(mat(X_));
 
       mat o(X_ * W_);
@@ -108,12 +109,12 @@ std::vector<mat> Model::get_err(const mat truth) {
 
   for (int i = W.size() - 2; i >= 0; --i) {
     if (this->type[i] == "dense") {
-      mat tmp;
-      mat aux;
-      if (this->type[i + 1] == "dense")
-      {
-        tmp = this->W[i + 1] * err_vec.back().t();
-        aux = tmp.rows(0, tmp.n_rows - 2);
+
+      //TODO add an else clause if another layer than dense is supported
+      mat aux = CudaMatrix(handle_, 0, 0);
+      if (this->type[i + 1] == "dense") {
+        mat tmp = this->W[i + 1] * err_vec.back().t();
+        aux = tmp.rows(0, tmp.N_ - 2);
       }
 
       mat cp2(H[i]);
@@ -133,8 +134,8 @@ void Model::back_propagate(float lambda, const mat truth) {
   for (size_t i = 0; i < this->W.size(); ++i) {
     if (this->type[i] != "pool")
     {
-      mat tmp = (lambda * err[i].t() * this->C[i]);
-      this->W[i] += tmp.t();
+      mat tmp = (err[i].t() * this->C[i] * lambda);
+      this->W[i] = this->W[i] + tmp.t();
     }
   }
 }
@@ -143,7 +144,7 @@ const float Model::loss(const mat& X, const mat& y) {
   mat out = this->forward(X);
   out = (out - y);
   out = out % out;
-  return arma::accu(out) / y.n_rows;
+  return out.accu() / y.N_;
 }
 
 void Model::train(const mat& X, const mat& y, size_t nb_epoch, float lr) {
@@ -153,7 +154,7 @@ void Model::train(const mat& X, const mat& y, size_t nb_epoch, float lr) {
   for (size_t i = 0; i < nb_epoch; i++)
   {
     auto shuffle = std::vector<size_t>();
-    for (size_t i = 0; i < X.n_rows; ++i) {
+    for (size_t i = 0; i < X.N_; ++i) {
       shuffle.push_back(i);
     }
     std::random_shuffle(shuffle.begin(), shuffle.end());

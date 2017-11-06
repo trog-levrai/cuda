@@ -6,19 +6,24 @@
 # include <map>
 # include <string>
 
-# include "activation_func.cuh"
-# include "cuda_matrix.hh"
+//# include "activation_func.cuh"
+# include "cuda_matrix.cuh"
 
 typedef CudaMatrix mat;
 
-static const std::map<const std::string, activation_func*> map_func = {
-  { "tan_h", new tan_h() },
-  { "relu" , new relu{} }
-};
+/*
+ *static const std::map<const std::string, activation_func*> map_func = {
+ *  { "tan_h", new tan_h() },
+ *  { "relu" , new relu{} }
+ *};
+ */
 
 class Model {
 
   public:
+    Model(cublasHandle_t handle)
+    :handle_(handle){};
+
     void add(size_t output_units);
     void add(size_t output_units, size_t input_units);
 
@@ -49,5 +54,6 @@ class Model {
     std::vector<mat> W;
     std::vector<mat> H;
     std::vector<mat> C;
+    cublasHandle_t handle_;
 
 };

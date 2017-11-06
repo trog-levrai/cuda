@@ -24,25 +24,25 @@ class CudaMatrix {
     CudaMatrix(const CudaMatrix&);
 
     //Dot product of matrix
-    CudaMatrix operator*(const CudaMatrix&);
+    CudaMatrix operator*(const CudaMatrix&) const;
 
     //Multiplication with a scalar
-    CudaMatrix operator*(float);
+    CudaMatrix operator*(float) const;
 
     //Cell-wise multiplication
-    CudaMatrix operator%(const CudaMatrix&);
+    CudaMatrix operator%(const CudaMatrix&) const;
 
     //Cell-wise substraction
-    CudaMatrix operator-(const CudaMatrix&);
+    CudaMatrix operator-(const CudaMatrix&) const;
 
     //Cell-wise addition
-    CudaMatrix operator+(const CudaMatrix&);
+    CudaMatrix operator+(const CudaMatrix&) const;
 
     //Substraction of a scalar
-    CudaMatrix operator-(float);
+    CudaMatrix operator-(float) const;
 
     //Addition of a scalar
-    CudaMatrix operator+(float);
+    CudaMatrix operator+(float) const;
 
     //Randomly fills the matrix
     void randomize();
@@ -52,6 +52,12 @@ class CudaMatrix {
 
     //Transform and return a matrix by a func
     CudaMatrix transform(float (*f)(float));
+
+    //Transform and return a matrix by a func
+    CudaMatrix relu();
+
+    //Transform and return a matrix by a func
+    CudaMatrix d_relu();
 
     //Reshape
     CudaMatrix reshape(size_t M, size_t N);

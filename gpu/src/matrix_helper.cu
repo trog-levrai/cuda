@@ -39,3 +39,13 @@ __global__ void rowGetter(float* src, float* dest, size_t first, size_t last, si
   if (i % col >= first && i % col < last)
     dest[i % (last - first) + i / col] = src[i];
 }
+
+__global__ void matRelu(float* a, int n) {
+  int i = threadIdx.x + blockDim.x * blockIdx.x;
+  if (i<n) a[i] = a[i] < 0 ? 0 : a[i];
+}
+
+__global__ void matDRelu(float* a, int n) {
+  int i = threadIdx.x + blockDim.x * blockIdx.x;
+  if (i<n) a[i] = a[i] < 0 ? 0 : 1;
+}
