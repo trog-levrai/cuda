@@ -47,6 +47,9 @@ class CudaMatrix {
     //Randomly fills the matrix
     void randomize();
 
+    // Print
+    void print();
+
     //Returns the transpose of the current matrix
     CudaMatrix t() const;
 

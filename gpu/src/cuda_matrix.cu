@@ -1,4 +1,6 @@
-#include "cuda_matrix.cuh"
+# include "cuda_matrix.cuh"
+# include <iostream>
+# include <stdlib.h>
 
 CudaMatrix ones(size_t M, size_t N, cublasHandle_t handle) {
   float *mat;
@@ -230,4 +232,15 @@ void CudaMatrix::addBias() {
     throw std::runtime_error("Memcpy failed");
 
   cudaFree(tmp);
+}
+
+void CudaMatrix::print() {
+  float* tmp = (float*)malloc(M_ * N_ * sizeof(float));
+  cublasGetMatrix(M_, N_, sizeof(float), a_d_, M_, (void *)tmp, M_);
+  for (size_t i = 0; i < M_; ++i) {
+    for (size_t j = 0; j < N_; ++j) {
+      std::cout << tmp[i * N_ +j] << " ";
+    }
+    std::cout << "\n";
+  }
 }
