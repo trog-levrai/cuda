@@ -117,6 +117,17 @@ CudaMatrix CudaMatrix::operator+(float m) const {
   return c;
 }
 
+CudaMatrix CudaMatrix::operator-(float m) const {
+  CudaMatrix c = CudaMatrix(handle_, M_, N_);
+  dim3 DimGrid((M_ * N_ - 1)/256 + 1, 1, 1);
+  dim3 DimBlock(256, 1, 1);
+  scalarAddKernel<<<DimGrid,DimBlock>>>(a_d_, -m, c.a_d_, M_ * N_);
+  cudaError_t stat = cudaDeviceSynchronize();
+  if (stat != cudaSuccess)
+    throw std::runtime_error("Device synchrnization failed");
+  return c;
+}
+
 CudaMatrix CudaMatrix::t() const {
   CudaMatrix c = CudaMatrix(handle_, N_, M_);
   float alpha = 1.;

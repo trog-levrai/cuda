@@ -148,23 +148,42 @@ const float Model::loss(const mat& X, const mat& y) {
 }
 
 void Model::train(const mat& X, const mat& y, size_t nb_epoch, float lr) {
+  const size_t batch_size = 64;
+
   if (this->W.empty())
     throw std::runtime_error("An model has no input layer");
 
   for (size_t i = 0; i < nb_epoch; i++)
   {
     auto shuffle = std::vector<size_t>();
-    for (size_t i = 0; i < X.N_; ++i) {
+    for (size_t i = 0; i < X.M_; ++i) {
       shuffle.push_back(i);
     }
     std::random_shuffle(shuffle.begin(), shuffle.end());
 
     std::cout << "============ EPOCH " << i << "\n";
 
-    for (size_t j = 0; j < shuffle.size(); ++j)
+    size_t j = 0;
+    while (1)
     {
-      this->forward_keep(X.row(shuffle[j]));
-      this->back_propagate(lr, y.row(shuffle[j]));
+      if (j + batch_size < shuffle.size())
+      {
+        std::vector<size_t> indices;
+        for (auto it = shuffle.begin() + j; it != shuffle.begin() + j + batch_size; ++it)
+          indices.push_back(*it);
+        this->forward_keep(X.rows(indices));
+        this->back_propagate(lr, y.rows(indices));
+        j += batch_size;
+      }
+      else
+      {
+        std::vector<size_t> indices;
+        for (auto it = shuffle.begin() + j; it != shuffle.end(); ++it)
+          indices.push_back(*it);
+        this->forward_keep(X.rows(indices));
+        this->back_propagate(lr, y.rows(indices));
+        break;
+      }
     }
 
     std::cout << "Train loss: " << this->loss(X, y) << std::endl;
