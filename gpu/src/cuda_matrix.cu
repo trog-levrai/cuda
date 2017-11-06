@@ -167,6 +167,15 @@ CudaMatrix CudaMatrix::rows(size_t start, size_t end) const {
   return c;
 }
 
+CudaMatrix CudaMatrix::rows(std::vector<size_t>& indices) const {
+  CudaMatrix c = CudaMatrix(handle_, indices.size(), N_);
+  dim3 DimGrid((M_ * N_ - 1)/256 + 1, 1, 1);
+  dim3 DimBlock(256, 1, 1);
+  for (size_t i = 0; i < indices.size(); ++i)
+    rowGetter<<<DimGrid,DimBlock>>>(a_d_, c.a_d_ + i * N_, indices[i], indices[i] + 1, N_);
+  return c;
+}
+
 float CudaMatrix::accu() const {
   return thrust::reduce(a_d_, a_d_ + M_ * N_);
 }

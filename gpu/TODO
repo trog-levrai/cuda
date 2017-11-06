@@ -1,3 +1,1 @@
 insert_cols(X_.n_cols, tmp);
-tmp.rows(0, tmp.n_rows - 2);
-X.rows(indices)

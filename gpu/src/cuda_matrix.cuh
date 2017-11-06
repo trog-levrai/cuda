@@ -65,6 +65,9 @@ class CudaMatrix {
     //Returns the column at the position indicated in the parameter
     CudaMatrix rows(size_t, size_t) const;
 
+    //Returns the column at indeces
+    CudaMatrix rows(std::vector<size_t>&) const;
+
   private:
     float* a_d_;
     cublasHandle_t handle_;
