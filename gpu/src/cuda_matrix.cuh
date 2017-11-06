@@ -68,6 +68,9 @@ class CudaMatrix {
     //Returns the column at indeces
     CudaMatrix rows(std::vector<size_t>&) const;
 
+    //Insert a column of 1
+    void addBias(); 
+
   private:
     float* a_d_;
     cublasHandle_t handle_;

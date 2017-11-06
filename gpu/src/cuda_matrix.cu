@@ -3,10 +3,12 @@
 CudaMatrix ones(size_t M, size_t N, cublasHandle_t handle) {
   float *mat;
   cudaMalloc((void**)&mat, M * N * sizeof(float));
-  cudaMemset(mat, 1, M * N * sizeof(float));
 
   CudaMatrix out(handle, M, N);
   out.setMat(mat);
+
+  out = out * 0 + 1;
+
   return out;
 }
 
@@ -146,7 +148,7 @@ CudaMatrix CudaMatrix::reshape(size_t M, size_t N) {
 
 void CudaMatrix::randomize() {
   curandState_t* states;
-  cudaError_t cudaStat =cudaMalloc((void**) &states, M_ * N_ * sizeof (curandState_t));
+  cudaError_t cudaStat = cudaMalloc((void**) &states, M_ * N_ * sizeof (curandState_t));
   if (cudaStat != cudaSuccess)
     throw std::runtime_error("Device memory allocation failed");
 
@@ -178,4 +180,23 @@ CudaMatrix CudaMatrix::rows(std::vector<size_t>& indices) const {
 
 float CudaMatrix::accu() const {
   return thrust::reduce(a_d_, a_d_ + M_ * N_);
+}
+
+void CudaMatrix::addBias() {
+  float* newi;
+  cudaError_t cudaStat = cudaMalloc((void**) &newi, this->M_ * (this->N_ + 1) * sizeof(float));
+  if (cudaStat != cudaSuccess)
+    throw std::runtime_error("Device memory allocation failed");
+
+  auto tmp = a_d_;
+  this->a_d_ = newi;
+  this->N_++;
+
+  *this = *this * 0 + 1;
+
+  cudaStat = cudaMemcpy((void*)newi, (void*)tmp, this->M_ * (this->N_ - 1) * sizeof(float), cudaMemcpyDeviceToDevice);
+  if (cudaStat != cudaSuccess)
+    throw std::runtime_error("Memcpy failed");
+
+  cudaFree(tmp);
 }
