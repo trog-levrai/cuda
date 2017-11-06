@@ -39,7 +39,7 @@ CudaMatrix::CudaMatrix(cublasHandle_t handle, size_t M, size_t N) {
   this->handle_ = handle;
   this->M_ = M;
   this->N_ = N;
-  cudaStat = cudaMalloc ((void**)&a_d_, M * N * sizeof (float));
+  cudaStat = cudaMalloc((void**)&a_d_, M * N * sizeof (float));
   if (cudaStat != cudaSuccess)
     throw std::runtime_error("Device memory allocation failed");
 }
@@ -49,7 +49,7 @@ CudaMatrix::CudaMatrix(const CudaMatrix& m) {
   this->handle_ = m.handle_;
   this->M_ = m.M_;
   this->N_ = m.N_;
-  cudaStat = cudaMalloc ((void**)&a_d_, m.M_ * m.N_ * sizeof (float));
+  cudaStat = cudaMalloc((void**)&a_d_, m.M_ * m.N_ * sizeof (float));
   if (cudaStat != cudaSuccess)
     throw std::runtime_error("Device memory allocation failed");
 

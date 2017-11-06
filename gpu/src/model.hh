@@ -6,7 +6,7 @@
 # include <map>
 # include <string>
 
-# include "activation_func.hh"
+# include "activation_func.cuh"
 # include "cuda_matrix.hh"
 
 typedef CudaMatrix mat;

@@ -58,9 +58,9 @@ const mat Model::forward(const mat& X) {
   for (auto& W_ : this->W) {
     if (this->type[i] == "dense") {
       mat X_(X_c);
-      mat tmp = arma::ones<mat>(X_.n_rows, 1);
+      mat tmp = ones(X_.n_rows, 1);
 
-      X_.insert_cols(X_.n_cols, tmp);
+      X_.insertBias();
 
       mat o = X_ * W_;
       X_c = this->activate(o, this->activate_vec[i]);
@@ -76,7 +76,7 @@ mat Model::forward_keep(const mat& X) {
 
   mat X_c(X);
   mat X_(X_c);
-  mat tmp = arma::ones<mat>(X_.n_rows, 1);
+  mat tmp = ones(X_.n_rows, 1);
   X_.insert_cols(X_.n_cols, tmp);
 
   size_t i = 0;
