@@ -1,4 +1,5 @@
-#include "matrix_helper.cuh"
+# include "matrix_helper.cuh"
+# include <stdio.h>
 
 __global__ void vecMulKernel(float* A, float* B, float* C, int n) {
   int i = threadIdx.x + blockDim.x * blockIdx.x;
@@ -17,7 +18,9 @@ __global__ void vecSubKernel(float* A, float* B, float* C, int n) {
 
 __global__ void scalarAddKernel(float* A, float s, float* C, int n) {
   int i = threadIdx.x + blockDim.x * blockIdx.x;
-  if (i<n) C[i] = A[i] + s;
+  if (i<n) {
+    C[i] = A[i] + s;
+  }
 }
 
 __global__ void matTransformKernel(float* A, float (*f)(float), int n) {

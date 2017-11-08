@@ -1,6 +1,7 @@
 # include "cuda_matrix.cuh"
 # include <iostream>
 # include <stdlib.h>
+# include <cmath>
 
 CudaMatrix ones(size_t M, size_t N, cublasHandle_t handle) {
   float *mat;
@@ -87,7 +88,7 @@ CudaMatrix CudaMatrix::operator%(const CudaMatrix& m) const {
 }
 
 CudaMatrix CudaMatrix::operator+(const CudaMatrix& m) const {
-  CudaMatrix c = CudaMatrix(handle_, M_, m.N_);
+  CudaMatrix c = CudaMatrix(handle_, 10, m.N_);
   dim3 DimGrid((M_ * N_ - 1)/256 + 1, 1, 1);
   dim3 DimBlock(256, 1, 1);
   vecAddKernel<<<DimGrid,DimBlock>>>(a_d_, m.a_d_, c.a_d_, M_ * N_);
@@ -110,7 +111,7 @@ CudaMatrix CudaMatrix::operator-(const CudaMatrix& m) const {
 
 CudaMatrix CudaMatrix::operator+(float m) const {
   CudaMatrix c = CudaMatrix(handle_, M_, N_);
-  dim3 DimGrid((M_ * N_ - 1)/256 + 1, 1, 1);
+  dim3 DimGrid(std::ceil((M_ * N_) / 256.0), 1, 1);
   dim3 DimBlock(256, 1, 1);
   scalarAddKernel<<<DimGrid,DimBlock>>>(a_d_, m, c.a_d_, M_ * N_);
   cudaError_t stat = cudaDeviceSynchronize();
