@@ -71,6 +71,15 @@ CudaMatrix CudaMatrix::operator*(const CudaMatrix& m) const {
   return c;
 }
 
+CudaMatrix& CudaMatrix::operator=(const CudaMatrix& m) {
+  cudaFree(a_d_);
+  M_ = m.M_;
+  N_ = m.N_;
+  a_d_ = m.a_d_;
+  handle_ = m.handle_;
+  return *this;
+}
+
 CudaMatrix CudaMatrix::operator*(float x) const {
   CudaMatrix c = CudaMatrix(handle_, M_, N_);
   cublasStatus_t stat = cublasSscal(handle_, c.M_ * c.N_, &x, c.a_d_, 1);

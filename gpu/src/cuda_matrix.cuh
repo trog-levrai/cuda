@@ -26,6 +26,9 @@ class CudaMatrix {
     //Dot product of matrix
     CudaMatrix operator*(const CudaMatrix&) const;
 
+    //Assignement operator
+    CudaMatrix& operator=(const CudaMatrix&);
+
     //Multiplication with a scalar
     CudaMatrix operator*(float) const;
 
