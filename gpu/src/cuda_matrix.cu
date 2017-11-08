@@ -90,7 +90,7 @@ CudaMatrix CudaMatrix::operator*(float x) const {
 
 CudaMatrix CudaMatrix::operator%(const CudaMatrix& m) const {
   CudaMatrix c = CudaMatrix(handle_, M_, m.N_);
-  dim3 DimGrid((M_ * N_ - 1)/256 + 1, 1, 1);
+  dim3 DimGrid(std::ceil((M_ * N_) / 256.0), 1, 1);
   dim3 DimBlock(256, 1, 1);
   vecMulKernel<<<DimGrid,DimBlock>>>(a_d_, m.a_d_, c.a_d_, M_ * N_);
   return c;
@@ -98,7 +98,7 @@ CudaMatrix CudaMatrix::operator%(const CudaMatrix& m) const {
 
 CudaMatrix CudaMatrix::operator+(const CudaMatrix& m) const {
   CudaMatrix c = CudaMatrix(handle_, 10, m.N_);
-  dim3 DimGrid((M_ * N_ - 1)/256 + 1, 1, 1);
+  dim3 DimGrid(std::ceil((M_ * N_) / 256.0), 1, 1);
   dim3 DimBlock(256, 1, 1);
   vecAddKernel<<<DimGrid,DimBlock>>>(a_d_, m.a_d_, c.a_d_, M_ * N_);
   cudaError_t stat = cudaDeviceSynchronize();
@@ -109,7 +109,7 @@ CudaMatrix CudaMatrix::operator+(const CudaMatrix& m) const {
 
 CudaMatrix CudaMatrix::operator-(const CudaMatrix& m) const {
   CudaMatrix c = CudaMatrix(handle_, M_, m.N_);
-  dim3 DimGrid((M_ * N_ - 1)/256 + 1, 1, 1);
+  dim3 DimGrid(std::ceil((M_ * N_) / 256.0), 1, 1);
   dim3 DimBlock(256, 1, 1);
   vecSubKernel<<<DimGrid,DimBlock>>>(a_d_, m.a_d_, c.a_d_, M_ * N_);
   cudaError_t stat = cudaDeviceSynchronize();
@@ -131,7 +131,7 @@ CudaMatrix CudaMatrix::operator+(float m) const {
 
 CudaMatrix CudaMatrix::operator-(float m) const {
   CudaMatrix c = CudaMatrix(handle_, M_, N_);
-  dim3 DimGrid((M_ * N_ - 1)/256 + 1, 1, 1);
+  dim3 DimGrid(std::ceil((M_ * N_) / 256.0), 1, 1);
   dim3 DimBlock(256, 1, 1);
   scalarAddKernel<<<DimGrid,DimBlock>>>(a_d_, -m, c.a_d_, M_ * N_);
   cudaError_t stat = cudaDeviceSynchronize();
@@ -151,7 +151,7 @@ CudaMatrix CudaMatrix::t() const {
 }
 
 CudaMatrix CudaMatrix::transform(float (*f)(float)) {
-  dim3 DimGrid((this->M_ * this->N_ - 1) / 256 + 1, 1, 1);
+  dim3 DimGrid(std::ceil((M_ * N_) / 256.0), 1, 1);
   dim3 DimBlock(256, 1, 1);
   matTransformKernel<<<DimGrid,DimBlock>>>(a_d_, f, this->M_ * this->N_);
   cudaError_t stat = cudaDeviceSynchronize();
@@ -161,7 +161,7 @@ CudaMatrix CudaMatrix::transform(float (*f)(float)) {
 }
 
 CudaMatrix CudaMatrix::relu() {
-  dim3 DimGrid((this->M_ * this->N_ - 1) / 256 + 1, 1, 1);
+  dim3 DimGrid(std::ceil((M_ * N_) / 256.0), 1, 1);
   dim3 DimBlock(256, 1, 1);
   matRelu<<<DimGrid,DimBlock>>>(a_d_, this->M_ * this->N_);
   cudaError_t stat = cudaDeviceSynchronize();
@@ -171,7 +171,7 @@ CudaMatrix CudaMatrix::relu() {
 }
 
 CudaMatrix CudaMatrix::d_relu() {
-  dim3 DimGrid((this->M_ * this->N_ - 1) / 256 + 1, 1, 1);
+  dim3 DimGrid(std::ceil((M_ * N_) / 256.0), 1, 1);
   dim3 DimBlock(256, 1, 1);
   matDRelu<<<DimGrid,DimBlock>>>(a_d_, this->M_ * this->N_);
   cudaError_t stat = cudaDeviceSynchronize();
@@ -196,14 +196,14 @@ void CudaMatrix::randomize() {
     throw std::runtime_error("Device memory allocation failed");
 
   init<<<M_ * N_, 1>>>(time(0), states);
-  dim3 DimGrid((M_ * N_ - 1)/256 + 1, 1, 1);
+  dim3 DimGrid(std::ceil((M_ * N_) / 256.0), 1, 1);
   dim3 DimBlock(256, 1, 1);
   randomizeKernel<<<DimGrid,DimBlock>>>(states, a_d_, M_ * N_);
 }
 
 CudaMatrix CudaMatrix::rows(size_t start, size_t end) const {
   CudaMatrix c = CudaMatrix(handle_, start - end, N_);
-  dim3 DimGrid((M_ * N_ - 1)/256 + 1, 1, 1);
+  dim3 DimGrid(std::ceil((M_ * N_) / 256.0), 1, 1);
   dim3 DimBlock(256, 1, 1);
   rowGetter<<<DimGrid,DimBlock>>>(a_d_, c.a_d_, start, end, N_);
   cudaError_t stat = cudaDeviceSynchronize();
@@ -214,7 +214,7 @@ CudaMatrix CudaMatrix::rows(size_t start, size_t end) const {
 
 CudaMatrix CudaMatrix::rows(std::vector<size_t>& indices) const {
   CudaMatrix c = CudaMatrix(handle_, indices.size(), N_);
-  dim3 DimGrid((M_ * N_ - 1)/256 + 1, 1, 1);
+  dim3 DimGrid(std::ceil((M_ * N_) / 256.0), 1, 1);
   dim3 DimBlock(256, 1, 1);
   for (size_t i = 0; i < indices.size(); ++i)
     rowGetter<<<DimGrid,DimBlock>>>(a_d_, c.a_d_ + i * N_, indices[i], indices[i] + 1, N_);
