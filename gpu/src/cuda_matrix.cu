@@ -210,6 +210,7 @@ CudaMatrix& CudaMatrix::d_relu() {
   return *this;
 }
 
+// WORK
 CudaMatrix& CudaMatrix::reshape(size_t M, size_t N) {
   if (M_ * N_ != M * N)
     throw std::runtime_error("Bad Reshape");
@@ -219,6 +220,7 @@ CudaMatrix& CudaMatrix::reshape(size_t M, size_t N) {
   return *out;
 }
 
+// WORK
 void CudaMatrix::randomize() {
   curandState_t* states;
   cudaError_t cudaStat = cudaMalloc((void**) &states, M_ * N_ * sizeof (curandState_t));
@@ -231,8 +233,9 @@ void CudaMatrix::randomize() {
   randomizeKernel<<<DimGrid,DimBlock>>>(states, a_d_.get(), M_ * N_);
 }
 
+
 CudaMatrix& CudaMatrix::rows(size_t start, size_t end) const {
-  CudaMatrix* c = new CudaMatrix(handle_, start - end, N_);
+  CudaMatrix* c = new CudaMatrix(handle_, end - start, N_);
   dim3 DimGrid(std::ceil((M_ * N_) / 256.0), 1, 1);
   dim3 DimBlock(256, 1, 1);
   rowGetter<<<DimGrid,DimBlock>>>(a_d_.get(), c->a_d_.get(), start, end, N_);
