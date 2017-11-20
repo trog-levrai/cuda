@@ -233,7 +233,7 @@ void CudaMatrix::randomize() {
   randomizeKernel<<<DimGrid,DimBlock>>>(states, a_d_.get(), M_ * N_);
 }
 
-
+// WORK
 CudaMatrix& CudaMatrix::rows(size_t start, size_t end) const {
   CudaMatrix* c = new CudaMatrix(handle_, end - start, N_);
   dim3 DimGrid(std::ceil((M_ * N_) / 256.0), 1, 1);
