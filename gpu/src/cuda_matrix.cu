@@ -76,24 +76,20 @@ CudaMatrix& CudaMatrix::operator*(const CudaMatrix& m) const {
   return *c;
 }
 
+// WORK
 CudaMatrix& CudaMatrix::operator=(const CudaMatrix& m) {
+  m.print();
   cudaError_t cudaStat;
-  this->handle_ = m.handle_;
-  this->M_ = m.M_;
-  this->N_ = m.N_;
-  float *a_d_tmp;
-  cudaStat = cudaMalloc((void**)&a_d_tmp, M_ * N_ * sizeof (float));
-  this->a_d_ = std::shared_ptr<float>(a_d_tmp, cudaFree);
-  if (cudaStat != cudaSuccess)
-    throw std::runtime_error("Device memory allocation failed");
 
-  cudaStat = cudaMemcpy(this->a_d_.get(), m.a_d_.get(), m.M_ * m.N_ * sizeof (float), cudaMemcpyDeviceToDevice);
+  CudaMatrix* n = new CudaMatrix(handle_, m.M_, m.N_);
+
+  cudaStat = cudaMemcpy(n->a_d_.get(), m.a_d_.get(), m.M_ * m.N_ * sizeof (float), cudaMemcpyDeviceToDevice);
   if (cudaStat != cudaSuccess)
     throw std::runtime_error("Device Memcpy failed");
-
-  return *this;
+  return *n;
 }
 
+// WORK
 CudaMatrix& CudaMatrix::operator*(float x) const {
   CudaMatrix *c = new CudaMatrix(*this);
   cublasStatus_t stat = cublasSscal(handle_, c->M_ * c->N_, &x, c->a_d_.get(), 1);
@@ -132,6 +128,7 @@ CudaMatrix& CudaMatrix::operator-(const CudaMatrix& m) const {
   return *c;
 }
 
+// WORK
 CudaMatrix& CudaMatrix::operator+(float m) const {
   CudaMatrix* c = new CudaMatrix(handle_, M_, N_);
   dim3 DimGrid(std::ceil((M_ * N_) / 256.0), 1, 1);

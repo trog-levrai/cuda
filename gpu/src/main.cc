@@ -17,9 +17,9 @@ int main() {
 //  Model m(handle);
 //  m.add(1, 2);
 
-  float X[] = {1.5, 1.5};
-  mat X_(handle, 1, 2, X);
-  X_.addBias();
+  float X[] = {-1.5, 0, 1.5};
+  mat X_(handle, 1, 3, X);
+  X_ = X_.relu();
   X_.print();
 //  Y_.print();
   return 0;
