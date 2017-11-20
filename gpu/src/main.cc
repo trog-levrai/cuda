@@ -19,9 +19,7 @@ int main() {
 
   float X[] = {1.5, 1.5};
   mat X_(handle, 1, 2, X);
-//  mat Y_ = X_ + 1;
-  X_ = X_ + 4;
-//  X_.addBias();
+  X_.addBias();
   X_.print();
 //  Y_.print();
   return 0;

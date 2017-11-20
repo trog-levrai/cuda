@@ -95,7 +95,7 @@ CudaMatrix& CudaMatrix::operator=(const CudaMatrix& m) {
 }
 
 CudaMatrix& CudaMatrix::operator*(float x) const {
-  CudaMatrix *c = new CudaMatrix(handle_, M_, N_);
+  CudaMatrix *c = new CudaMatrix(*this);
   cublasStatus_t stat = cublasSscal(handle_, c->M_ * c->N_, &x, c->a_d_.get(), 1);
   if (stat != CUBLAS_STATUS_SUCCESS)
     throw std::runtime_error("Matrix multiplication with scalar failed");
@@ -245,17 +245,14 @@ void CudaMatrix::addBias() {
   if (cudaStat != cudaSuccess)
     throw std::runtime_error("Device memory allocation failed");
 
-  auto tmp = a_d_.get();
+  auto tmp = std::shared_ptr<float>(a_d_);
   this->a_d_ = std::shared_ptr<float>(newi, cudaFree);
   this->N_++;
 
   *this = *this * 0 + 1;
-
-  cudaStat = cudaMemcpy((void*)newi, (void*)tmp, this->M_ * (this->N_ - 1) * sizeof(float), cudaMemcpyDeviceToDevice);
+  cudaStat = cudaMemcpy(a_d_.get(), tmp.get(), this->M_ * (this->N_ - 1) * sizeof(float), cudaMemcpyDeviceToDevice);
   if (cudaStat != cudaSuccess)
-    throw std::runtime_error("Memcpy failed");
-
-  cudaFree(tmp);
+    throw std::runtime_error(cudaGetErrorString(cudaStat));
 }
 
 void CudaMatrix::print() const {
