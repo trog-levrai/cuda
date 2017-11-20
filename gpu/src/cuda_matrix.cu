@@ -171,6 +171,7 @@ CudaMatrix& CudaMatrix::transform(float (*f)(float)) {
   return *this;
 }
 
+// WORK
 CudaMatrix& CudaMatrix::relu() {
   dim3 DimGrid(std::ceil((M_ * N_) / 256.0), 1, 1);
   dim3 DimBlock(256, 1, 1);
@@ -181,6 +182,7 @@ CudaMatrix& CudaMatrix::relu() {
   return *this;
 }
 
+// WORK
 CudaMatrix& CudaMatrix::d_relu() {
   dim3 DimGrid(std::ceil((M_ * N_) / 256.0), 1, 1);
   dim3 DimBlock(256, 1, 1);
