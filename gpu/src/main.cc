@@ -14,13 +14,15 @@ int main() {
     return EXIT_FAILURE;
   }
 
-//  Model m(handle);
-//  m.add(1, 2);
-
-  float X[] = {-1.5, 0, 1.5};
+  float X[] = {-1, 0, 1};
   mat X_(handle, 1, 3, X);
-  X_ = X_.d_relu();
-  X_.print();
-//  Y_.print();
+
+  /*  float X2[] = {-1, 0, 0.5};
+  mat X2_(handle, 1, 3, X2);
+
+  X_ = X_ - 0.5;*/
+
+  X_.t().print();
+
   return 0;
 }

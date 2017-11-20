@@ -109,6 +109,7 @@ CudaMatrix& CudaMatrix::operator*(float x) const {
   return *c;
 }
 
+// WORK
 CudaMatrix& CudaMatrix::operator%(const CudaMatrix& m) const {
   CudaMatrix *c = new CudaMatrix(handle_, M_, m.N_);
   dim3 DimGrid(std::ceil((M_ * N_) / 256.0), 1, 1);
@@ -117,6 +118,7 @@ CudaMatrix& CudaMatrix::operator%(const CudaMatrix& m) const {
   return *c;
 }
 
+// WORK
 CudaMatrix& CudaMatrix::operator+(const CudaMatrix& m) const {
   CudaMatrix *c = new CudaMatrix(handle_, m.M_, m.N_);
   dim3 DimGrid(std::ceil((M_ * N_) / 256.0), 1, 1);
@@ -128,6 +130,7 @@ CudaMatrix& CudaMatrix::operator+(const CudaMatrix& m) const {
   return *c;
 }
 
+// WORK
 CudaMatrix& CudaMatrix::operator-(const CudaMatrix& m) const {
   CudaMatrix* c = new CudaMatrix(handle_, M_, m.N_);
   dim3 DimGrid(std::ceil((M_ * N_) / 256.0), 1, 1);
@@ -151,6 +154,7 @@ CudaMatrix& CudaMatrix::operator+(float m) const {
   return *c;
 }
 
+// WORK
 CudaMatrix& CudaMatrix::operator-(float m) const {
   CudaMatrix* c = new CudaMatrix(handle_, M_, N_);
   dim3 DimGrid(std::ceil((M_ * N_) / 256.0), 1, 1);
@@ -162,11 +166,12 @@ CudaMatrix& CudaMatrix::operator-(float m) const {
   return *c;
 }
 
+// WORK
 CudaMatrix& CudaMatrix::t() const {
   CudaMatrix* c = new CudaMatrix(handle_, N_, M_);
   float alpha = 1.;
   float beta = 0.;
-  cublasStatus_t stat = cublasSgeam(handle_, CUBLAS_OP_T, CUBLAS_OP_T, M_, N_, &alpha, a_d_.get(), N_, nullptr, &beta, M_, c->a_d_.get(), N_);
+  cublasStatus_t stat = cublasSgeam(handle_, CUBLAS_OP_T, CUBLAS_OP_T, M_, N_, &alpha, this->a_d_.get(), N_, &beta, this->a_d_.get(), N_, c->a_d_.get(), M_);
   if (stat != CUBLAS_STATUS_SUCCESS)
     throw std::runtime_error("Matrix transposition failed");
   return *c;
