@@ -66,11 +66,12 @@ CudaMatrix::CudaMatrix(const CudaMatrix& m) {
     throw std::runtime_error("Device Memcpy failed");
 }
 
+// WORK
 CudaMatrix& CudaMatrix::operator*(const CudaMatrix& m) const {
   CudaMatrix* c = new CudaMatrix(handle_, M_, m.N_);
   float alpha = 1.;
   float beta = 0.;
-  cublasStatus_t stat = cublasSgemm(handle_, CUBLAS_OP_N, CUBLAS_OP_N, M_, m.N_, N_, &alpha, a_d_.get(), M_, m.a_d_.get(), m.N_, &beta, c->a_d_.get(), M_);
+  cublasStatus_t stat = cublasSgemm(handle_, CUBLAS_OP_N, CUBLAS_OP_N, M_, m.N_, N_, &alpha, a_d_.get(), M_, m.a_d_.get(), m.M_, &beta, c->a_d_.get(), M_);
   if (stat != CUBLAS_STATUS_SUCCESS)
     throw std::runtime_error("Matrix dot product failed");
   return *c;
