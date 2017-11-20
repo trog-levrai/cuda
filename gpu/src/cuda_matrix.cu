@@ -78,7 +78,6 @@ CudaMatrix& CudaMatrix::operator*(const CudaMatrix& m) const {
 
 // WORK
 CudaMatrix& CudaMatrix::operator=(const CudaMatrix& m) {
-  m.print();
   cudaError_t cudaStat;
 
   CudaMatrix* n = new CudaMatrix(handle_, m.M_, m.N_);
@@ -86,6 +85,18 @@ CudaMatrix& CudaMatrix::operator=(const CudaMatrix& m) {
   cudaStat = cudaMemcpy(n->a_d_.get(), m.a_d_.get(), m.M_ * m.N_ * sizeof (float), cudaMemcpyDeviceToDevice);
   if (cudaStat != cudaSuccess)
     throw std::runtime_error("Device Memcpy failed");
+  
+  this->M_ = m.M_;
+  this->N_ = m.N_;
+
+  float *a_d_tmp;
+  cudaStat = cudaMalloc((void**)&a_d_tmp, m.M_ * m.N_ * sizeof (float));
+  this->a_d_ = std::shared_ptr<float>(a_d_tmp, cudaFree);
+
+  cudaStat = cudaMemcpy(this->a_d_.get(), m.a_d_.get(), m.M_ * m.N_ * sizeof (float), cudaMemcpyDeviceToDevice);
+  if (cudaStat != cudaSuccess)
+    throw std::runtime_error("Device Memcpy failed");
+  
   return *n;
 }
 
@@ -107,7 +118,7 @@ CudaMatrix& CudaMatrix::operator%(const CudaMatrix& m) const {
 }
 
 CudaMatrix& CudaMatrix::operator+(const CudaMatrix& m) const {
-  CudaMatrix *c = new CudaMatrix(handle_, 10, m.N_);
+  CudaMatrix *c = new CudaMatrix(handle_, m.M_, m.N_);
   dim3 DimGrid(std::ceil((M_ * N_) / 256.0), 1, 1);
   dim3 DimBlock(256, 1, 1);
   vecAddKernel<<<DimGrid,DimBlock>>>(a_d_.get(), m.a_d_.get(), c->a_d_.get(), M_ * N_);
