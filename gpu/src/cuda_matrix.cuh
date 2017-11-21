@@ -5,6 +5,7 @@
 # include <cuda.h>
 # include <unistd.h>
 # include <thrust/device_vector.h>
+# include <thrust/execution_policy.h>
 # include <thrust/reduce.h>
 # include "cublas_v2.h"
 # include "matrix_helper.cuh"

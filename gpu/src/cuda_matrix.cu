@@ -245,6 +245,7 @@ CudaMatrix& CudaMatrix::rows(size_t start, size_t end) const {
   return *c;
 }
 
+// WORK
 CudaMatrix& CudaMatrix::rows(std::vector<size_t>& indices) const {
   CudaMatrix* c = new CudaMatrix(handle_, indices.size(), N_);
   dim3 DimGrid(std::ceil((M_ * N_) / 256.0), 1, 1);
@@ -254,8 +255,9 @@ CudaMatrix& CudaMatrix::rows(std::vector<size_t>& indices) const {
   return *c;
 }
 
+// WORK
 float CudaMatrix::accu() const {
-  return thrust::reduce(a_d_.get(), a_d_.get() + M_ * N_);
+  return thrust::reduce(thrust::device, a_d_.get(), a_d_.get() + M_ * N_);
 }
 
 void CudaMatrix::addBias() {
