@@ -14,14 +14,15 @@ int main() {
     return EXIT_FAILURE;
   }
 
-  float X[] = {0., 1., 2., 3., 4., 5., 6., 7., 8., 9.};
+  float X[] = {1., 2., 3., 4., 5., 6., 7., 8., 9.};
   mat X_(handle, 3, 3, X);
 
   /*  float X2[] = {-1, 0, 0.5};
   mat X2_(handle, 1, 3, X2);
 
   X_ = X_ - 0.5;*/
-  std::cout << X_.accu() << std::endl;
+  X_.addBias();
+  X_.print();
 
   return 0;
 }
