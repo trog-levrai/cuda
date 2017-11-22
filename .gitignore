@@ -1,5 +1,6 @@
 main
-
+unit
+*.swp
 *.i
 *.ii
 *.gpu

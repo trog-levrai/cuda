@@ -1,6 +1,8 @@
 CPP=nvcc --std=c++11 -G -g
 SRC=src/main.cc src/cuda_matrix.cu src/matrix_helper.cu src/model.cc
+UNIT=src/unit_test.cc src/cuda_matrix.cu src/matrix_helper.cu src/model.cc
 BIN=main
+UBIN=unit
 CPPFLAGS=-lcuda -lcublas
 
 all:
@@ -9,7 +11,11 @@ all:
 check: all
 	./$(BIN)
 
+unit:
+	$(CPP) $(UNIT) $(CPPFLAGS) -o $(UBIN)
+	./$(UBIN)
+
 clean:
-	$(RM) $(BIN)
+	$(RM) $(BIN) $(UBIN)
 
 .PHONY: clean

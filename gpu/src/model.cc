@@ -130,6 +130,10 @@ std::vector<mat> Model::get_err(const mat truth) {
 
 void Model::back_propagate(float lambda, const mat truth) {
   auto err = get_err(truth);
+  //for (auto i : err) {
+    //i.print();
+    //std::cout << "M:N\t" << i.M_ << ":" << i.N_ << std::endl;
+  //}
 
   for (size_t i = 0; i < this->W.size(); ++i) {
     if (this->type[i] != "pool")
