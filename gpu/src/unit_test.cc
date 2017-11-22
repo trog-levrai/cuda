@@ -40,10 +40,31 @@ int main() {
   //mat y = X_ - X_;
 
   //Element-wise addition
-  mat y = X_ + X_;
+  //mat y = X_ + X_;
 
   //Ones
   //mat y = ones(4, 3, handle);
+
+  //Random matrix
+  //mat y = ones(4, 3, handle);
+  //y.randomize();
+
+  //Reshape matrix
+  //mat y = ones(4, 3, handle);
+  //y = y.reshape(3, 4);
+  //y.randomize();
+
+  //Accu
+  //std::cout << X_.accu() << std::endl;
+
+  //Rows interval
+  //mat y = X_.rows(1, 3);
+
+  //Rows indexes
+  auto aux = std::vector<size_t>();
+  aux.push_back(0);
+  aux.push_back(2);
+  mat y = X_.rows(aux);
 
   y.print();
 
