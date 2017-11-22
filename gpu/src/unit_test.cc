@@ -61,10 +61,20 @@ int main() {
   //mat y = X_.rows(1, 3);
 
   //Rows indexes
-  auto aux = std::vector<size_t>();
-  aux.push_back(0);
-  aux.push_back(2);
-  mat y = X_.rows(aux);
+  //auto aux = std::vector<size_t>();
+  //aux.push_back(0);
+  //aux.push_back(2);
+  //mat y = X_.rows(aux);
+
+  //Add Bias
+  //mat y = X_;
+  //y.addBias();
+
+  //Relu
+  //mat y = (X_ - 3).relu();
+
+  //DRelu
+  //mat y = (X_ - 3).d_relu();
 
   y.print();
 
