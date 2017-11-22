@@ -74,7 +74,7 @@ int main() {
   //mat y = (X_ - 3).relu();
 
   //DRelu
-  //mat y = (X_ - 3).d_relu();
+  mat y = (X_ - 3).d_relu();
 
   y.print();
 

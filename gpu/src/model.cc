@@ -59,7 +59,6 @@ const mat Model::forward(const mat& X) {
   for (auto& W_ : this->W) {
     if (this->type[i] == "dense") {
       mat X_(X_c);
-      mat tmp = ones(X_.N_, 1, handle_);
 
       X_.addBias();
 
@@ -77,14 +76,12 @@ mat Model::forward_keep(const mat& X) {
 
   mat X_c(X);
   mat X_(X_c);
-  mat tmp = ones(X_.N_, 1, handle_);
   X_.addBias();
 
   size_t i = 0;
   for (auto& W_ : this->W) {
     if (this->type[i] == "dense") {
       mat X_(X_c);
-      mat tmp = ones(X_.N_, 1, handle_);
       X_.addBias();
       this->C.push_back(mat(X_));
 
@@ -109,7 +106,6 @@ std::vector<mat> Model::get_err(const mat truth) {
 
   for (int i = W.size() - 2; i >= 0; --i) {
     if (this->type[i] == "dense") {
-
       //TODO add an else clause if another layer than dense is supported
       mat aux = CudaMatrix(handle_, 0, 0);
       if (this->type[i + 1] == "dense") {
@@ -139,6 +135,12 @@ void Model::back_propagate(float lambda, const mat truth) {
     if (this->type[i] != "pool")
     {
       mat tmp = (err[i].t() * this->C[i] * lambda);
+      //std::cout << "Error" << std::endl;
+      //(err[i].t()).print();
+      //std::cout << "LR * C" << std::endl;
+      //(this->C[i] * lambda).print();
+      //std::cout << "tmp" << std::endl;
+      //tmp.print();
       this->W[i] = this->W[i] + tmp.t();
     }
   }
