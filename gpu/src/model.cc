@@ -75,22 +75,18 @@ mat Model::forward_keep(const mat& X) {
   this->C.clear();
 
   mat X_c(X);
-  mat X_(X_c);
-  X_.addBias();
-
+  //mat X_(X_c);
+  //X_.addBias();
   size_t i = 0;
   for (auto& W_ : this->W) {
-    if (this->type[i] == "dense") {
-      mat X_(X_c);
-      X_.addBias();
-      this->C.push_back(mat(X_));
+    mat X_(X_c);
+    X_.addBias();
+    this->C.push_back(mat(X_));
 
-      mat o(X_ * W_);
+    mat o(X_ * W_);
+    this->H.push_back(mat(o));
 
-      this->H.push_back(mat(o));
-
-      X_c = this->activate(o, this->activate_vec[i]);
-    }
+    X_c = this->activate(o, this->activate_vec[i]);
     ++i;
   }
   this->C.push_back(X_c);
@@ -135,12 +131,6 @@ void Model::back_propagate(float lambda, const mat truth) {
     if (this->type[i] != "pool")
     {
       mat tmp = (err[i].t() * this->C[i] * lambda);
-      //std::cout << "Error" << std::endl;
-      //(err[i].t()).print();
-      //std::cout << "LR * C" << std::endl;
-      //(this->C[i] * lambda).print();
-      //std::cout << "tmp" << std::endl;
-      //tmp.print();
       this->W[i] = this->W[i] + tmp.t();
     }
   }
@@ -191,7 +181,6 @@ void Model::train(const mat& X, const mat& y, size_t nb_epoch, float lr) {
         break;
       }
     }
-
     std::cout << "Train loss: " << this->loss(X, y) << std::endl;
     std::cout << std::endl;
   }

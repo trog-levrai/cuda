@@ -112,6 +112,10 @@ CudaMatrix& CudaMatrix::operator*(float x) const {
 
 // WORK
 CudaMatrix& CudaMatrix::operator%(const CudaMatrix& m) const {
+  if (this->shape() != m.shape()) {
+    this->print_shape("this\t");
+    m.print_shape("m\t");
+  }
   CudaMatrix *c = new CudaMatrix(handle_, M_, m.N_);
   dim3 DimGrid(std::ceil((M_ * N_) / 256.0), 1, 1);
   dim3 DimBlock(256, 1, 1);
@@ -121,6 +125,10 @@ CudaMatrix& CudaMatrix::operator%(const CudaMatrix& m) const {
 
 // WORK
 CudaMatrix& CudaMatrix::operator+(const CudaMatrix& m) const {
+  if (this->shape() != m.shape()) {
+    this->print_shape("this\t");
+    m.print_shape("m\t");
+  }
   CudaMatrix *c = new CudaMatrix(handle_, m.M_, m.N_);
   dim3 DimGrid(std::ceil((M_ * N_) / 256.0), 1, 1);
   dim3 DimBlock(256, 1, 1);
@@ -133,13 +141,41 @@ CudaMatrix& CudaMatrix::operator+(const CudaMatrix& m) const {
 
 // WORK
 CudaMatrix& CudaMatrix::operator-(const CudaMatrix& m) const {
-  CudaMatrix* c = new CudaMatrix(handle_, M_, m.N_);
+  CudaMatrix* c;
   dim3 DimGrid(std::ceil((M_ * N_) / 256.0), 1, 1);
   dim3 DimBlock(256, 1, 1);
-  vecSubKernel<<<DimGrid,DimBlock>>>(a_d_.get(), m.a_d_.get(), c->a_d_.get(), M_ * N_);
-  cudaError_t stat = cudaDeviceSynchronize();
-  if (stat != cudaSuccess)
-    throw std::runtime_error("Device synchrnization failed");
+  //This case is vector to matrix.
+  if (this->shape() != m.shape()) {
+    this->print_shape("this\t");
+    m.print_shape("m\t");
+    if (M_ == 1) {
+      //This instance is a rowvec
+      for (size_t i = 0; i < m.M_; ++i) {
+        c = new CudaMatrix(handle_, m.M_, m.N_);
+        vecSubKernel<<<DimGrid,DimBlock>>>(a_d_.get(), m.a_d_.get() + i * m.N_, c->a_d_.get() + i * m.N_, N_);
+        cudaError_t stat = cudaDeviceSynchronize();
+        if (stat != cudaSuccess)
+          throw std::runtime_error("Device synchrnization failed");
+      }
+    } else if (m.M_ == 1) {
+      //m instance is a rowvec
+      for (size_t i = 0; i < M_; ++i) {
+        c = new CudaMatrix(handle_, M_, N_);
+        vecSubKernel<<<DimGrid,DimBlock>>>(a_d_.get() + i * N_, m.a_d_.get(), c->a_d_.get() + i * N_, N_);
+        cudaError_t stat = cudaDeviceSynchronize();
+        if (stat != cudaSuccess)
+          throw std::runtime_error("Device synchrnization failed");
+      }
+    } else {
+      return (this->t() - m.t()).t();
+    }
+  } else {
+    c = new CudaMatrix(handle_, M_, N_);
+    vecSubKernel<<<DimGrid,DimBlock>>>(a_d_.get(), m.a_d_.get(), c->a_d_.get(), M_ * N_);
+    cudaError_t stat = cudaDeviceSynchronize();
+    if (stat != cudaSuccess)
+      throw std::runtime_error("Device synchrnization failed");
+  }
   return *c;
 }
 
@@ -289,4 +325,12 @@ void CudaMatrix::print() const {
     }
     std::cout << "\n";
   }
+}
+
+std::pair<size_t, size_t> CudaMatrix::shape() const {
+  return std::pair<size_t, size_t>(M_, N_);
+}
+
+void CudaMatrix::print_shape(std::string str) const {
+  std::cout << str << this->M_ << ":" << this->N_ << std::endl;
 }

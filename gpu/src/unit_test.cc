@@ -16,8 +16,16 @@ int main() {
 
   float X[] = {1., 2., 3.,\
                4., 5., 6.,\
-               7., 8., 9.};
-  mat X_(handle, 3, 3, X);
+               7., 8., 9.,\
+              10., 11., 12.,\
+              13., 14., 15.};
+  float Y[] = {-3.,\
+               -6.,\
+               -9.,\
+              -12.,\
+              -15.};
+  mat X_(handle, 5, 3, X);
+  mat Y_(handle, 5, 1, Y);
   //Transpose
   //mat y = X_.t();
 
@@ -64,6 +72,7 @@ int main() {
   //auto aux = std::vector<size_t>();
   //aux.push_back(0);
   //aux.push_back(2);
+  //aux.push_back(4);
   //mat y = X_.rows(aux);
 
   //Add Bias
@@ -74,7 +83,10 @@ int main() {
   //mat y = (X_ - 3).relu();
 
   //DRelu
-  mat y = (X_ - 3).d_relu();
+  //mat y = (X_ - 3).d_relu();
+  
+  //Matrix addition with vector
+  mat y = X_ + Y_;
 
   y.print();
 

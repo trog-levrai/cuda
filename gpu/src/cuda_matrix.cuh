@@ -82,7 +82,13 @@ class CudaMatrix {
     CudaMatrix& rows(std::vector<size_t>&) const;
 
     //Insert a column of 1
-    void addBias(); 
+    void addBias();
+
+    //Returns the shape of the matrix as a pair
+    std::pair<size_t, size_t> shape() const;
+
+    //Prints the shape of th matrix
+    void print_shape(std::string) const;
 
   private:
     std::shared_ptr<float> a_d_;
