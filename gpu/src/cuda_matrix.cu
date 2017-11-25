@@ -228,7 +228,7 @@ CudaMatrix& CudaMatrix::transform(float (*f)(float)) {
 CudaMatrix& CudaMatrix::relu() {
   dim3 DimGrid(std::ceil((M_ * N_) / 256.0), 1, 1);
   dim3 DimBlock(256, 1, 1);
-  matRelu<<<DimGrid,DimBlock>>>(a_d_.get(), this->M_ * this->N_);
+  matTanh<<<DimGrid,DimBlock>>>(a_d_.get(), this->M_ * this->N_);
   cudaError_t stat = cudaDeviceSynchronize();
   if (stat != cudaSuccess)
     throw std::runtime_error("Device synchrnization failed");
@@ -239,7 +239,7 @@ CudaMatrix& CudaMatrix::relu() {
 CudaMatrix& CudaMatrix::d_relu() {
   dim3 DimGrid(std::ceil((M_ * N_) / 256.0), 1, 1);
   dim3 DimBlock(256, 1, 1);
-  matDRelu<<<DimGrid,DimBlock>>>(a_d_.get(), this->M_ * this->N_);
+  matDTanh<<<DimGrid,DimBlock>>>(a_d_.get(), this->M_ * this->N_);
   cudaError_t stat = cudaDeviceSynchronize();
   if (stat != cudaSuccess)
     throw std::runtime_error("Device synchrnization failed");

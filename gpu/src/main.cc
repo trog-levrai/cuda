@@ -25,7 +25,7 @@ int main() {
   //M.add(3, 2, "relu");
   M.add(1, 2, "relu");
 
-  M.train(X_, y, 10, 0.1);
+  M.train(X_, y, 10000, 0.1);
   mat out = M.forward(X_);
 
   M.forward(X_).print();
