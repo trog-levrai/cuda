@@ -162,28 +162,15 @@ void Model::train(const mat& X, const mat& y, size_t nb_epoch, float lr) {
 
     std::cout << "============ EPOCH " << i << "\n";
 
-    size_t j = 0;
-    while (1)
-    {
-      if (j + batch_size < shuffle.size())
-      {
-        std::vector<size_t> indices;
-        for (auto it = shuffle.begin() + j; it != shuffle.begin() + j + batch_size; ++it)
-          indices.push_back(*it);
-        this->forward_keep(X.rows(indices));
-        this->back_propagate(lr, y.rows(indices));
-        j += batch_size;
-      }
-      else
-      {
-        std::vector<size_t> indices;
-        for (auto it = shuffle.begin() + j; it != shuffle.end(); ++it)
-          indices.push_back(*it);
-        this->forward_keep(X.rows(indices));
-        this->back_propagate(lr, y.rows(indices));
-        break;
-      }
+    for (size_t j = 0; j * batch_size < shuffle.size(); ++j) {
+      std::vector<size_t> indices;
+      size_t b = j * batch_size;
+      for (auto it = b; it < b + batch_size && it < shuffle.size(); ++it)
+        indices.push_back(shuffle[it]);
+      this->forward_keep(X.rows(indices));
+      this->back_propagate(lr, y.rows(indices));
     }
+
     std::cout << "Train loss: " << this->loss(X, y) << std::endl;
     std::cout << std::endl;
   }
