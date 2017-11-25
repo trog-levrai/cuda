@@ -152,8 +152,8 @@ CudaMatrix& CudaMatrix::operator-(const CudaMatrix& m) const {
     m.print_shape("m\t");
     if (M_ == 1) {
       //This instance is a rowvec
+      c = new CudaMatrix(handle_, m.M_, m.N_);
       for (size_t i = 0; i < m.M_; ++i) {
-        c = new CudaMatrix(handle_, m.M_, m.N_);
         vecSubKernel<<<DimGrid,DimBlock>>>(a_d_.get(), m.a_d_.get() + i * m.N_, c->a_d_.get() + i * m.N_, N_);
         cudaError_t stat = cudaDeviceSynchronize();
         if (stat != cudaSuccess)
@@ -161,8 +161,8 @@ CudaMatrix& CudaMatrix::operator-(const CudaMatrix& m) const {
       }
     } else if (m.M_ == 1) {
       //m instance is a rowvec
+      c = new CudaMatrix(handle_, M_, N_);
       for (size_t i = 0; i < M_; ++i) {
-        c = new CudaMatrix(handle_, M_, N_);
         vecSubKernel<<<DimGrid,DimBlock>>>(a_d_.get() + i * N_, m.a_d_.get(), c->a_d_.get() + i * N_, N_);
         cudaError_t stat = cudaDeviceSynchronize();
         if (stat != cudaSuccess)
@@ -230,7 +230,7 @@ CudaMatrix& CudaMatrix::transform(float (*f)(float)) {
 CudaMatrix& CudaMatrix::relu() {
   dim3 DimGrid(std::ceil((M_ * N_) / 256.0), 1, 1);
   dim3 DimBlock(256, 1, 1);
-  matRelu<<<DimGrid,DimBlock>>>(a_d_.get(), this->M_ * this->N_);
+  matTanh<<<DimGrid,DimBlock>>>(a_d_.get(), this->M_ * this->N_);
   cudaError_t stat = cudaDeviceSynchronize();
   if (stat != cudaSuccess)
     throw std::runtime_error("Device synchrnization failed");
@@ -241,7 +241,7 @@ CudaMatrix& CudaMatrix::relu() {
 CudaMatrix& CudaMatrix::d_relu() {
   dim3 DimGrid(std::ceil((M_ * N_) / 256.0), 1, 1);
   dim3 DimBlock(256, 1, 1);
-  matDRelu<<<DimGrid,DimBlock>>>(a_d_.get(), this->M_ * this->N_);
+  matDTanh<<<DimGrid,DimBlock>>>(a_d_.get(), this->M_ * this->N_);
   cudaError_t stat = cudaDeviceSynchronize();
   if (stat != cudaSuccess)
     throw std::runtime_error("Device synchrnization failed");

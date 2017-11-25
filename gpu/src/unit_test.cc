@@ -19,11 +19,11 @@ int main() {
                7., 8., 9.,\
               10., 11., 12.,\
               13., 14., 15.};
-  float Y[] = {-3.,\
-               -6.,\
-               -9.,\
-              -12.,\
-              -15.};
+  float Y[] = {3.,\
+               6.,\
+               9.,\
+              12.,\
+              15.};
   mat X_(handle, 5, 3, X);
   mat Y_(handle, 5, 1, Y);
   //Transpose
@@ -84,9 +84,9 @@ int main() {
 
   //DRelu
   //mat y = (X_ - 3).d_relu();
-  
+
   //Matrix addition with vector
-  mat y = X_ + Y_;
+  mat y = X_ - Y_;
 
   y.print();
 
