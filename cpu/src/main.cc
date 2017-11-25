@@ -5,6 +5,7 @@
 #include "mnist.hh"
 
 int main() {
+  /*
   std::string filename = "../data/train-images-idx3-ubyte";
 
   std::vector<mat> train_data;
@@ -49,25 +50,26 @@ int main() {
     acc = t(i, 0) == train_label(i) ? acc + 1 : acc;
 
   std::cout << "Accuracy= " << acc / train_data.size() << "\n";
-  /*
-     Model M;
-     M.add(3, 2);
-     M.add(1);
+  */
 
-     arma::Mat<float> X(4, 2);
-     X = {{0, 0},
-     {0, 1},
-     {1, 0},
-     {1, 1}};
+  Model M;
+  M.add(3, 2);
+  M.add(1);
 
-     arma::Mat<float> y(1, 4);
-     y = {{1, 0, 0, 1}};
-     y = y.t();
+  arma::Mat<float> X(4, 2);
+  X = {{0, 0},
+  {0, 1},
+  {1, 0},
+  {1, 1}};
 
-     M.train(X, y, 400, 0.1);
+  arma::Mat<float> y(1, 4);
+  y = {{-1, -1, -1, 1}};
+  y = y.t();
 
-     std::cout << M.forward(X) << std::endl;
-     std::cout << y << std::endl;*/
+  M.train(X, y, 400, 0.1);
+
+  std::cout << M.forward(X) << std::endl;
+  std::cout << y << std::endl;
 
   return 0;
 }
