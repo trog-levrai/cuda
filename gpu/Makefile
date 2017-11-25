@@ -1,4 +1,4 @@
-CPP=nvcc --std=c++11 -G -g -lineinfo -Wno-deprecated-gpu-targets
+CPP=nvcc --std=c++11 -G -g -Wno-deprecated-gpu-targets
 SRC=src/main.cc src/cuda_matrix.cu src/matrix_helper.cu src/model.cc
 UNIT=src/unit_test.cc src/cuda_matrix.cu src/matrix_helper.cu src/model.cc
 BIN=main

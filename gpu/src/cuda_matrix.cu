@@ -26,7 +26,9 @@ CudaMatrix::CudaMatrix(cublasHandle_t handle, size_t M, size_t N, const float* a
   this->N_ = N;
   float *a_d_tmp;
   cudaStat = cudaMalloc ((void**)&a_d_tmp, M * N * sizeof (float));
-  a_d_ = std::shared_ptr<float>(a_d_tmp, cudaFree);
+
+  this->a_d_ = std::shared_ptr<float>(a_d_tmp, cudaFree);
+
   if (cudaStat != cudaSuccess)
     throw std::runtime_error("Device memory allocation failed");
 

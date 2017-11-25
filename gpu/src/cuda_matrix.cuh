@@ -91,7 +91,7 @@ class CudaMatrix {
     void print_shape(std::string) const;
 
   private:
-    std::shared_ptr<float> a_d_;
+    std::shared_ptr<float> a_d_ = NULL;
     cublasHandle_t handle_;
   public:
     size_t M_;
