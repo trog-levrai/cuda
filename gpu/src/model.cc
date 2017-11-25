@@ -10,6 +10,9 @@ void Model::init_W(size_t m, size_t n) {
   M = M - 0.5;
   float r = 4.0 * sqrt(6.0 / (m + n));
   M = M * r;
+
+  M = M * 0;
+
   this->W.emplace_back(M);
 }
 
@@ -140,7 +143,7 @@ const float Model::loss(const mat& X, const mat& y) {
   mat out = this->forward(X);
   out = (out - y);
   out = out % out;
-  return out.accu() / y.N_;
+  return out.accu() / y.M_;
 }
 
 void Model::train(const mat& X, const mat& y, size_t nb_epoch, float lr) {

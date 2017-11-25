@@ -10,6 +10,9 @@ void Model::init_W(size_t m, size_t n) {
   M -= 0.5;
   float r = 4.0 * sqrt(6.0 / (m + n));
   M *= r;
+
+  M *= 0;
+
   this->W.emplace_back(M);
 }
 

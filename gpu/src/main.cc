@@ -28,7 +28,7 @@ int main() {
     Model M(handle);
     M.add(1, 2, "relu");
 
-    M.train(X_, y, 1000, 0.1);
+    M.train(X_, y, 100, 0.1);
     mat out = M.forward(X_);
 
     M.forward(X_).print();
