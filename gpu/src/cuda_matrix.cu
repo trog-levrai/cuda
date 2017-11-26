@@ -70,8 +70,15 @@ CudaMatrix& CudaMatrix::operator*(const CudaMatrix& m) const {
 }
 
 // WORK
-CudaMatrix& CudaMatrix::operator*(const CudaMatrix& m) const {
-  return this->dot(m, 1.0);
+CudaMatrix& CudaMatrix::dot(const CudaMatrix& m, float alpha) const {
+  float beta = 0.;
+  CudaMatrix* c = new CudaMatrix(handle_, M_, m.N_);
+
+  cublasStatus_t stat = cublasSgemm(handle_, CUBLAS_OP_N, CUBLAS_OP_N, m.N_, M_, N_, &alpha, m.a_d_.get(), m.N_, a_d_.get(), N_, &beta, c->a_d_.get(), m.N_);
+  if (stat != CUBLAS_STATUS_SUCCESS)
+    throw std::runtime_error("Matrix dot product failed");
+  sync_device();
+  return *c;
 }
 
 // WORK
