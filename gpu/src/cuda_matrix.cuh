@@ -82,7 +82,7 @@ class CudaMatrix {
     CudaMatrix& rows(std::vector<size_t>&) const;
 
     //Insert a column of 1
-    void addBias();
+    CudaMatrix& addBias();
 
     //Returns the shape of the matrix as a pair
     std::pair<size_t, size_t> shape() const;
@@ -98,4 +98,4 @@ class CudaMatrix {
     size_t N_;
 };
 
-CudaMatrix ones(size_t M, size_t N, cublasHandle_t handle);
+CudaMatrix& ones(size_t M, size_t N, cublasHandle_t handle);

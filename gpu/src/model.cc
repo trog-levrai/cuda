@@ -62,14 +62,15 @@ const mat Model::forward(const mat& X) {
   for (auto& W_ : this->W) {
     if (this->type[i] == "dense") {
       mat X_(X_c);
-
-      X_.addBias();
+      X_ = X_.addBias();
 
       mat o = X_ * W_;
+
       X_c = this->activate(o, this->activate_vec[i]);
     }
     ++i;
   }
+
   return X_c;
 }
 
@@ -78,15 +79,13 @@ mat Model::forward_keep(const mat& X) {
   this->C.clear();
 
   mat X_c(X);
-  //mat X_(X_c);
-  //X_.addBias();
   size_t i = 0;
   for (auto& W_ : this->W) {
     mat X_(X_c);
-    X_.addBias();
+    X_ = X_.addBias();
     this->C.push_back(mat(X_));
 
-    mat o(X_ * W_);
+    mat o = X_ * W_;
     this->H.push_back(mat(o));
 
     X_c = this->activate(o, this->activate_vec[i]);
@@ -125,10 +124,6 @@ std::vector<mat> Model::get_err(const mat truth) {
 
 void Model::back_propagate(float lambda, const mat truth) {
   auto err = get_err(truth);
-  //for (auto i : err) {
-    //i.print();
-    //std::cout << "M:N\t" << i.M_ << ":" << i.N_ << std::endl;
-  //}
 
   for (size_t i = 0; i < this->W.size(); ++i) {
     if (this->type[i] != "pool")
@@ -147,7 +142,7 @@ const float Model::loss(const mat& X, const mat& y) {
 }
 
 void Model::train(const mat& X, const mat& y, size_t nb_epoch, float lr) {
-  const size_t batch_size = 64;
+  const size_t batch_size = 1;
 
   if (this->W.empty())
     throw std::runtime_error("An model has no input layer");
@@ -158,7 +153,7 @@ void Model::train(const mat& X, const mat& y, size_t nb_epoch, float lr) {
     for (size_t i = 0; i < X.M_; ++i) {
       shuffle.push_back(i);
     }
-    std::random_shuffle(shuffle.begin(), shuffle.end());
+    //std::random_shuffle(shuffle.begin(), shuffle.end());
 
     std::cout << "============ EPOCH " << i << "\n";
 

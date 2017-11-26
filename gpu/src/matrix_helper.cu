@@ -51,8 +51,8 @@ __global__ void matRelu(float* a, int n) {
 __global__ void matTanh(float* a, int n) {
   int i = threadIdx.x + blockDim.x * blockIdx.x;
   if (i < n) {
-    float ex = expf(-2. * a[i]);
-    a[i] = (1. - ex) / (1. + ex);
+    float ex = expf(2. * a[i]);
+    a[i] = (ex - 1) / (ex + 1);
   }
 }
 
@@ -64,8 +64,28 @@ __global__ void matDRelu(float* a, int n) {
 __global__ void matDTanh(float* a, int n) {
   int i = threadIdx.x + blockDim.x * blockIdx.x;
   if (i < n) {
-    float ex = expf(-2. * a[i]);
-    float x = (1. - ex) / (1. + ex);
-    a[i] = 1. - x*x;
+    float ex = expf(2. * a[i]);
+    float x = (ex - 1) / (ex + 1);
+    a[i] = 1. - x * x;
+  }
+}
+
+__global__ void rowToCol(float* s, float* d, int n, int m) {
+  int k = threadIdx.x + blockDim.x * blockIdx.x;
+  if (k < n * m) {
+    int i = k / n;
+    int j = k % n;
+
+    d[i + j * m] = s[i * n + j];
+  }
+}
+
+__global__ void colToRow(float* s, float* d, int n, int m) {
+  int k = threadIdx.x + blockDim.x * blockIdx.x;
+  if (k < n * m) {
+    int i = k / n;
+    int j = k % n;
+
+    d[i * n + j] = s[i + j * m];
   }
 }

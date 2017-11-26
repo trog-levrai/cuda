@@ -3,16 +3,17 @@
 # include <stdlib.h>
 # include <cmath>
 
-CudaMatrix ones(size_t M, size_t N, cublasHandle_t handle) {
+CudaMatrix& ones(size_t M, size_t N, cublasHandle_t handle) {
   float *mat;
   cudaMalloc((void**)&mat, M * N * sizeof (float));
 
-  CudaMatrix out(handle, M, N);
-  out.setMat(mat);
+  CudaMatrix* out = new CudaMatrix(handle, M, N);
 
-  out = out * 0. + 1.;
+  out->setMat(mat);
 
-  return out;
+  *out = *out * 0. + 1.;
+
+  return *out;
 }
 
 CudaMatrix::~CudaMatrix() {
@@ -70,13 +71,54 @@ CudaMatrix::CudaMatrix(const CudaMatrix& m) {
 
 // WORK
 CudaMatrix& CudaMatrix::operator*(const CudaMatrix& m) const {
-  CudaMatrix* c = new CudaMatrix(handle_, M_, m.N_);
-  float alpha = 1.;
-  float beta = 0.;
-  cublasStatus_t stat = cublasSgemm(handle_, CUBLAS_OP_N, CUBLAS_OP_N, M_, m.N_, N_, &alpha, a_d_.get(), M_, m.a_d_.get(), m.M_, &beta, c->a_d_.get(), M_);
+  float *a;
+  float *b;
+  float *c;
+  
+  cudaError_t cudaStat = cudaMalloc((void**)&a, M_ * N_ * sizeof (float));
+  if (cudaStat != cudaSuccess)
+    throw std::runtime_error("Device memory allocation failed");
+
+  cudaStat = cudaMalloc((void**)&b, m.M_ * m.N_ * sizeof (float));
+  if (cudaStat != cudaSuccess)
+    throw std::runtime_error("Device memory allocation failed");
+
+  cudaStat = cudaMalloc((void**)&c, M_ * m.N_ * sizeof (float));
+  if (cudaStat != cudaSuccess)
+    throw std::runtime_error("Device memory allocation failed");
+
+  dim3 DimGrid(std::ceil((M_ * N_) / 256.0), 1, 1);
+  dim3 DimBlock(256, 1, 1);
+  rowToCol<<<DimGrid,DimBlock>>>(a_d_.get(), a, N_, M_);
+
+  DimGrid = dim3(std::ceil((m.M_ * m.N_) / 256.0), 1, 1);
+  DimBlock = dim3(256, 1, 1);
+  rowToCol<<<DimGrid,DimBlock>>>(m.a_d_.get(), b, m.N_, m.M_);
+
+  int m_ = M_;
+  int k_ = N_;
+  int n_ = m.N_;
+
+  int lda = m_;
+  int ldb = k_;
+  int ldc = m_;
+  CudaMatrix* out = new CudaMatrix(handle_, m_, n_);
+
+  float al = 1.;
+  float be = 0.;
+
+  float* alpha = &al;
+  float* beta = &be;
+
+  cublasStatus_t stat = cublasSgemm(handle_, CUBLAS_OP_N, CUBLAS_OP_N, m_, n_, k_, alpha, a, lda, b, ldb, beta, c, ldc);
   if (stat != CUBLAS_STATUS_SUCCESS)
     throw std::runtime_error("Matrix dot product failed");
-  return *c;
+
+  DimGrid = dim3(std::ceil((M_ * m.N_) / 256.0), 1, 1);
+  DimBlock = dim3(256, 1, 1);
+  colToRow<<<DimGrid,DimBlock>>>(c, out->a_d_.get(), m.N_, M_);
+
+  return *out;
 }
 
 // WORK
@@ -299,23 +341,16 @@ float CudaMatrix::accu() const {
 }
 
 // WORK
-void CudaMatrix::addBias() {
-  float* newi;
-  cudaError_t cudaStat = cudaMalloc((void**) &newi, this->M_ * (this->N_ + 1) * sizeof (float));
-  if (cudaStat != cudaSuccess)
-    throw std::runtime_error("Device memory allocation failed");
+CudaMatrix& CudaMatrix::addBias() {
+  CudaMatrix& out = ones(this->M_, this->N_ + 1, handle_);
 
-  auto tmp = std::shared_ptr<float>(a_d_);
-  this->a_d_ = std::shared_ptr<float>(newi, cudaFree);
-
-  this->N_++;
-  *this = *this * 0. + 1.;
-  size_t n = this->N_ - 1;
   for (size_t i = 0; i < this->M_; ++i) {
-    cudaStat = cudaMemcpy(a_d_.get() + i * this->N_, tmp.get() + i * n, n * sizeof (float), cudaMemcpyDeviceToDevice);
+    cudaError_t cudaStat = cudaMemcpy(out.a_d_.get() + i * (this->N_ + 1), this->a_d_.get() + i * N_, N_ * sizeof (float), cudaMemcpyDeviceToDevice);
     if (cudaStat != cudaSuccess)
       throw std::runtime_error(cudaGetErrorString(cudaStat));
   }
+
+  return out;
 }
 
 void CudaMatrix::print() const {

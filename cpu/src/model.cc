@@ -28,7 +28,6 @@ void Model::add(size_t output_units, size_t input_units) {
   this->add(output_units, input_units, "tan_h");
 }
 
-
 void Model::add(size_t output_units) {
   this->add(output_units, "tan_h");
 }
@@ -78,9 +77,9 @@ const mat Model::forward(const mat& X) {
       X_.insert_cols(X_.n_cols, tmp);
 
       mat o = X_ * W_;
+
       X_c = this->activate(o, this->activate_vec[i]);
     }
-
     else if (this->type[i] == "pool") {
       size_t n_rows = X_c.n_rows;
       size_t n_cols = X_c.n_cols / 4;
@@ -99,6 +98,7 @@ const mat Model::forward(const mat& X) {
     }
     ++i;
   }
+
   return X_c;
 }
 
@@ -216,13 +216,14 @@ void Model::back_propagate(float lambda, const mat truth) {
 
 const float Model::loss(const mat& X, const mat& y) {
   mat out = this->forward(X);
+
   out = (out - y);
   out = out % out;
   return arma::accu(out) / y.n_rows;
 }
 
 void Model::train(const mat& X, const mat& y, size_t nb_epoch, float lr) {
-  const size_t batch_size = 64;
+  const size_t batch_size = 1;
 
   if (this->W.empty())
     throw std::runtime_error("An model has no input layer");
@@ -233,31 +234,18 @@ void Model::train(const mat& X, const mat& y, size_t nb_epoch, float lr) {
     for (size_t i = 0; i < X.n_rows; ++i) {
       shuffle.push_back(i);
     }
-    std::random_shuffle(shuffle.begin(), shuffle.end());
+    //std::random_shuffle(shuffle.begin(), shuffle.end());
 
     std::cout << "============ EPOCH " << i << "\n";
 
-    size_t j = 0;
-    while (1)
-    {
-      if (j + batch_size < shuffle.size())
-      {
-        arma::uvec indices;
-        for (auto it = shuffle.begin() + j; it != shuffle.begin() + j + batch_size; ++it)
-          indices << *it;
-        this->forward_keep(X.rows(indices));
-        this->back_propagate(lr, y.rows(indices));
-        j += batch_size;
-      }
-      else
-      {
-        arma::uvec indices;
-        for (auto it = shuffle.begin() + j; it != shuffle.end(); ++it)
-          indices << *it;
-        this->forward_keep(X.rows(indices));
-        this->back_propagate(lr, y.rows(indices));
-        break;
-      }
+    for (size_t j = 0; j * batch_size < shuffle.size(); ++j) {
+      arma::uvec indices;
+      size_t b = j * batch_size;
+      for (size_t it = b; it < b + batch_size && it < shuffle.size(); ++it)
+        indices << shuffle[it];
+      this->forward_keep(X.rows(indices));
+      this->back_propagate(lr, y.rows(indices));
+
     }
 
     std::cout << "Train loss: " << this->loss(X, y) << std::endl;

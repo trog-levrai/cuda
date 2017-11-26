@@ -17,3 +17,5 @@ __global__ void matDTanh(float* a, int n);
 __global__ void init(unsigned int seed, curandState_t* states);
 __global__ void randomizeKernel(curandState_t* states, float* a, int n);
 __global__ void rowGetter(float* src, float* dest, size_t first, size_t last, size_t col);
+__global__ void rowToCol(float* s, float* d, int n, int m);
+__global__ void colToRow(float* s, float* d, int n, int m);

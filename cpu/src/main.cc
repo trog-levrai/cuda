@@ -53,7 +53,7 @@ int main() {
   */
 
   Model M;
-  M.add(1, 2);
+  M.add(1, 2, "tan_h");
 
   arma::Mat<float> X(4, 2);
   X = {{0, 0},
@@ -65,10 +65,13 @@ int main() {
   y = {{-1, -1, -1, 1}};
   y = y.t();
 
-  M.train(X, y, 100, 0.1);
+  std::cout << X;
+  std::cout << y;
 
-  std::cout << M.forward(X) << std::endl;
-  std::cout << y << std::endl;
+  M.train(X, y, 1000, 0.1);
+
+  std::cout << M.forward(X);
+  //std::cout << y << std::endl;
 
   return 0;
 }
