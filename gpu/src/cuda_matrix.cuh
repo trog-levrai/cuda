@@ -25,34 +25,34 @@ class CudaMatrix {
     CudaMatrix(const CudaMatrix&);
 
     //Dot product of matrix
-    CudaMatrix& operator*(const CudaMatrix&) const;
-    
+    CudaMatrix operator*(const CudaMatrix&) const;
+
     //Doc product without realloc
-    CudaMatrix& mult_buff(const CudaMatrix& m, CudaMatrix& o) const;
-    
+    CudaMatrix mult_buff(const CudaMatrix& m, CudaMatrix& o) const;
+
     //Dot product of matrix
-    CudaMatrix& dot(const CudaMatrix&, float al) const;
+    CudaMatrix dot(const CudaMatrix&, float al) const;
 
     //Assignement operator
-    CudaMatrix& operator=(const CudaMatrix&);
+    CudaMatrix operator=(const CudaMatrix&);
 
     //Multiplication with a scalar
-    CudaMatrix& operator*(float) const;
-    
+    CudaMatrix operator*(float) const;
+
     //Cell-wise multiplication
-    CudaMatrix& operator%(const CudaMatrix&) const;
+    CudaMatrix operator%(const CudaMatrix&) const;
 
     //Cell-wise substraction
-    CudaMatrix& operator-(const CudaMatrix&) const;
+    CudaMatrix operator-(const CudaMatrix&) const;
 
     //Cell-wise addition
-    CudaMatrix& operator+(const CudaMatrix&) const;
+    CudaMatrix operator+(const CudaMatrix&) const;
 
     //Substraction of a scalar
-    CudaMatrix& operator-(float) const;
+    CudaMatrix operator-(float) const;
 
     //Addition of a scalar
-    CudaMatrix& operator+(float) const;
+    CudaMatrix operator+(float) const;
 
     //Randomly fills the matrix
     void randomize();
@@ -61,19 +61,19 @@ class CudaMatrix {
     void print() const;
 
     //Returns the transpose of the current matrix
-    CudaMatrix& t() const;
+    CudaMatrix t() const;
 
     //Transform and return a matrix by a func
-    CudaMatrix& transform(float (*f)(float));
+    CudaMatrix transform(float (*f)(float));
 
     //Transform and return a matrix by a func
-    CudaMatrix& relu();
+    CudaMatrix relu();
 
     //Transform and return a matrix by a func
-    CudaMatrix& d_relu();
+    CudaMatrix d_relu();
 
     //Reshape
-    CudaMatrix& reshape(size_t M, size_t N);
+    CudaMatrix reshape(size_t M, size_t N);
 
     //set mat
     void setMat(float* arr) { a_d_ = std::shared_ptr<float>(arr, cudaFree); };
@@ -85,13 +85,13 @@ class CudaMatrix {
     float accu() const;
 
     //Returns the column at the position indicated in the parameter
-    CudaMatrix& rows(size_t, size_t) const;
+    CudaMatrix rows(size_t, size_t) const;
 
     //Returns the column at indeces
-    CudaMatrix& rows(std::vector<size_t>&) const;
+    CudaMatrix rows(std::vector<size_t>&) const;
 
     //Insert a column of 1
-    CudaMatrix& addBias();
+    CudaMatrix addBias();
 
     //Returns the shape of the matrix as a pair
     std::pair<size_t, size_t> shape() const;
@@ -107,4 +107,4 @@ class CudaMatrix {
     size_t N_;
 };
 
-CudaMatrix& ones(size_t M, size_t N, cublasHandle_t handle);
+CudaMatrix ones(size_t M, size_t N, cublasHandle_t handle);

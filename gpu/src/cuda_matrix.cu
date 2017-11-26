@@ -11,12 +11,12 @@ void sync_device() {
     throw std::runtime_error("Device synchrnization failed");
 }
 
-CudaMatrix& ones(size_t M, size_t N, cublasHandle_t handle) {
-  CudaMatrix* out = new CudaMatrix(handle, M, N);
-  cudaMemset((void**)out->getMat().get(), 0, M * N * sizeof(float));
-  *out = *out + 1.;
+CudaMatrix ones(size_t M, size_t N, cublasHandle_t handle) {
+  auto out = CudaMatrix(handle, M, N);
+  cudaMemset((void**)out.getMat().get(), 0, M * N * sizeof(float));
+  out = out + 1.;
 
-  return *out;
+  return out;
 }
 
 CudaMatrix::~CudaMatrix() {
@@ -57,20 +57,20 @@ CudaMatrix::CudaMatrix(const CudaMatrix& m) {
 }
 
 // WORK
-CudaMatrix& CudaMatrix::operator*(const CudaMatrix& m) const {
+CudaMatrix CudaMatrix::operator*(const CudaMatrix& m) const {
   float alpha = 1.;
   float beta = 0.;
-  CudaMatrix* c = new CudaMatrix(handle_, M_, m.N_);
+  auto c = CudaMatrix(handle_, M_, m.N_);
 
-  CublasSafeCall(cublasSgemm(handle_, CUBLAS_OP_N, CUBLAS_OP_N, m.N_, M_, N_, &alpha, m.a_d_.get(), m.N_, a_d_.get(), N_, &beta, c->a_d_.get(), m.N_));
+  CublasSafeCall(cublasSgemm(handle_, CUBLAS_OP_N, CUBLAS_OP_N, m.N_, M_, N_, &alpha, m.a_d_.get(), m.N_, a_d_.get(), N_, &beta, c.a_d_.get(), m.N_));
 
   sync_device();
 
-  return *c;
+  return c;
 }
 
 // WORK
-CudaMatrix& CudaMatrix::mult_buff(const CudaMatrix& m, CudaMatrix& o) const {
+CudaMatrix CudaMatrix::mult_buff(const CudaMatrix& m, CudaMatrix& o) const {
   float alpha = 1.;
   float beta = 0.;
 
@@ -85,164 +85,126 @@ CudaMatrix& CudaMatrix::mult_buff(const CudaMatrix& m, CudaMatrix& o) const {
 }
 
 // WORK
-CudaMatrix& CudaMatrix::dot(const CudaMatrix& m, float alpha) const {
+CudaMatrix CudaMatrix::dot(const CudaMatrix& m, float alpha) const {
   float beta = 0.;
-  CudaMatrix* c = new CudaMatrix(handle_, M_, m.N_);
+  auto c = CudaMatrix(handle_, M_, m.N_);
 
-  CublasSafeCall(cublasSgemm(handle_, CUBLAS_OP_N, CUBLAS_OP_N, m.N_, M_, N_, &alpha, m.a_d_.get(), m.N_, a_d_.get(), N_, &beta, c->a_d_.get(), m.N_));
+  CublasSafeCall(cublasSgemm(handle_, CUBLAS_OP_N, CUBLAS_OP_N, m.N_, M_, N_, &alpha, m.a_d_.get(), m.N_, a_d_.get(), N_, &beta, c.a_d_.get(), m.N_));
 
   sync_device();
 
-  return *c;
+  return c;
 }
 
 // WORK
-CudaMatrix& CudaMatrix::operator=(const CudaMatrix& m) {
-  CudaMatrix* n = new CudaMatrix(handle_, m.M_, m.N_);
+CudaMatrix CudaMatrix::operator=(const CudaMatrix& m) {
 
   this->M_ = m.M_;
   this->N_ = m.N_;
-  this->a_d_ = std::shared_ptr<float>(m.getMat());
+  this->a_d_ = m.a_d_;
 
   return *this;
 }
 
 // WORK
-CudaMatrix& CudaMatrix::operator*(float x) const {
-  CudaMatrix *c = new CudaMatrix(*this);
-  CublasSafeCall(cublasSscal(handle_, c->M_ * c->N_, &x, c->a_d_.get(), 1));
+CudaMatrix CudaMatrix::operator*(float x) const {
+  auto c = CudaMatrix(*this);
+  CublasSafeCall(cublasSscal(handle_, c.M_ * c.N_, &x, c.a_d_.get(), 1));
 
   sync_device();
 
-  return *c;
+  return c;
 }
 
 // WORK
-CudaMatrix& CudaMatrix::operator%(const CudaMatrix& m) const {
+CudaMatrix CudaMatrix::operator%(const CudaMatrix& m) const {
   if (this->shape() != m.shape()) {
     this->print_shape("this\t");
     m.print_shape("m\t");
     exit(-1);
   }
 
-  CudaMatrix *c = new CudaMatrix(handle_, M_, m.N_);
+  auto c = CudaMatrix(handle_, M_, m.N_);
   dim3 DimGrid(std::ceil((M_ * N_) / 256.0), 1, 1);
   dim3 DimBlock(256, 1, 1);
-  vecMulKernel<<<DimGrid,DimBlock>>>(a_d_.get(), m.a_d_.get(), c->a_d_.get(), M_ * N_);
+  vecMulKernel<<<DimGrid,DimBlock>>>(a_d_.get(), m.a_d_.get(), c.a_d_.get(), M_ * N_);
 
   sync_device();
 
-  return *c;
+  return c;
 }
 
 // WORK
-CudaMatrix& CudaMatrix::operator+(const CudaMatrix& m) const {
+CudaMatrix CudaMatrix::operator+(const CudaMatrix& m) const {
   if (this->shape() != m.shape()) {
     this->print_shape("this\t");
     m.print_shape("m\t");
   }
 
-  CudaMatrix *c = new CudaMatrix(handle_, m.M_, m.N_);
+  CudaMatrix c = CudaMatrix(handle_, m.M_, m.N_);
 
   dim3 DimGrid(std::ceil((M_ * N_) / 256.0), 1, 1);
   dim3 DimBlock(256, 1, 1);
-  vecAddKernel<<<DimGrid,DimBlock>>>(a_d_.get(), m.a_d_.get(), c->a_d_.get(), M_ * N_);
+  vecAddKernel<<<DimGrid,DimBlock>>>(a_d_.get(), m.a_d_.get(), c.a_d_.get(), M_ * N_);
 
   sync_device();
 
-  return *c;
+  return c;
 }
 
 // WORK
-CudaMatrix& CudaMatrix::operator-(const CudaMatrix& m) const {
-  CudaMatrix* c;
+CudaMatrix CudaMatrix::operator-(const CudaMatrix& m) const {
+  dim3 DimGrid(std::ceil((N_ * M_) / 256.0), 1, 1);
+  dim3 DimBlock(256, 1, 1);
 
-  // FIXME
-  //This case is vector to matrix.
-  if (this->shape() != m.shape()) {
-    this->print_shape("this\t");
-    m.print_shape("m\t");
-    if (M_ == 1) {
-      //This instance is a rowvec
-      c = new CudaMatrix(handle_, m.M_, m.N_);
-
-      // FIXME
-
-      dim3 DimGrid(std::ceil((N_) / 256.0), 1, 1);
-      dim3 DimBlock(256, 1, 1);
-
-      for (size_t i = 0; i < m.M_; ++i)
-        vecSubKernel<<<DimGrid,DimBlock>>>(a_d_.get(), m.a_d_.get() + i * m.N_, c->a_d_.get() + i * m.N_, N_);
-
-      sync_device();
-    } else if (m.M_ == 1) {
-      //m instance is a rowvec
-      c = new CudaMatrix(handle_, M_, N_);
-
-      dim3 DimGrid(std::ceil((N_) / 256.0), 1, 1);
-      dim3 DimBlock(256, 1, 1);
-
-      // FIXME
-      for (size_t i = 0; i < M_; ++i) {
-        vecSubKernel<<<DimGrid,DimBlock>>>(a_d_.get() + i * N_, m.a_d_.get(), c->a_d_.get() + i * N_, N_);
-      }
-      sync_device();
-    } else {
-      return (this->t() - m.t()).t();
-    }
-  } else {
-    dim3 DimGrid(std::ceil((N_ * M_) / 256.0), 1, 1);
-    dim3 DimBlock(256, 1, 1);
-
-    c = new CudaMatrix(handle_, M_, N_);
-    vecSubKernel<<<DimGrid,DimBlock>>>(a_d_.get(), m.a_d_.get(), c->a_d_.get(), M_ * N_);
-    sync_device();
-  }
-  return *c;
+  auto c = CudaMatrix(handle_, M_, N_);
+  vecSubKernel<<<DimGrid,DimBlock>>>(a_d_.get(), m.a_d_.get(), c.a_d_.get(), M_ * N_);
+  sync_device();
+  return c;
 }
 
 // WORK
-CudaMatrix& CudaMatrix::operator+(float m) const {
-  CudaMatrix* c = new CudaMatrix(handle_, M_, N_);
+CudaMatrix CudaMatrix::operator+(float m) const {
+  auto c = CudaMatrix(handle_, M_, N_);
 
   dim3 DimGrid(std::ceil((M_ * N_) / 256.0), 1, 1);
   dim3 DimBlock(256, 1, 1);
-  scalarAddKernel<<<DimGrid,DimBlock>>>(a_d_.get(), m, c->a_d_.get(), M_ * N_);
+  scalarAddKernel<<<DimGrid,DimBlock>>>(a_d_.get(), m, c.a_d_.get(), M_ * N_);
 
   sync_device();
 
-  return *c;
+  return c;
 }
 
 // WORK
-CudaMatrix& CudaMatrix::operator-(float m) const {
-  CudaMatrix* c = new CudaMatrix(handle_, M_, N_);
+CudaMatrix CudaMatrix::operator-(float m) const {
+  auto c = CudaMatrix(handle_, M_, N_);
 
   dim3 DimGrid(std::ceil((M_ * N_) / 256.0), 1, 1);
   dim3 DimBlock(256, 1, 1);
-  scalarAddKernel<<<DimGrid,DimBlock>>>(a_d_.get(), -m, c->a_d_.get(), M_ * N_);
+  scalarAddKernel<<<DimGrid,DimBlock>>>(a_d_.get(), -m, c.a_d_.get(), M_ * N_);
 
   sync_device();
 
-  return *c;
+  return c;
 }
 
 // WORK
-CudaMatrix& CudaMatrix::t() const {
-  CudaMatrix* c = new CudaMatrix(handle_, N_, M_);
+CudaMatrix CudaMatrix::t() const {
+  auto c = CudaMatrix(handle_, N_, M_);
 
   float alpha = 1.;
   float beta = 0.;
-  cublasStatus_t stat = cublasSgeam(handle_, CUBLAS_OP_T, CUBLAS_OP_T, M_, N_, &alpha, this->a_d_.get(), N_, &beta, this->a_d_.get(), N_, c->a_d_.get(), M_);
+  cublasStatus_t stat = cublasSgeam(handle_, CUBLAS_OP_T, CUBLAS_OP_T, M_, N_, &alpha, this->a_d_.get(), N_, &beta, this->a_d_.get(), N_, c.a_d_.get(), M_);
 
   sync_device();
 
   if (stat != CUBLAS_STATUS_SUCCESS)
     throw std::runtime_error("Matrix transposition failed");
-  return *c;
+  return c;
 }
 
-CudaMatrix& CudaMatrix::transform(float (*f)(float)) {
+CudaMatrix CudaMatrix::transform(float (*f)(float)) {
   dim3 DimGrid(std::ceil((M_ * N_) / 256.0), 1, 1);
   dim3 DimBlock(256, 1, 1);
   matTransformKernel<<<DimGrid,DimBlock>>>(a_d_.get(), f, this->M_ * this->N_);
@@ -253,7 +215,7 @@ CudaMatrix& CudaMatrix::transform(float (*f)(float)) {
 }
 
 // WORK
-CudaMatrix& CudaMatrix::relu() {
+CudaMatrix CudaMatrix::relu() {
   dim3 DimGrid(std::ceil((M_ * N_) / 256.0), 1, 1);
   dim3 DimBlock(256, 1, 1);
   matTanh<<<DimGrid,DimBlock>>>(a_d_.get(), this->M_ * this->N_);
@@ -264,7 +226,7 @@ CudaMatrix& CudaMatrix::relu() {
 }
 
 // WORK
-CudaMatrix& CudaMatrix::d_relu() {
+CudaMatrix CudaMatrix::d_relu() {
   dim3 DimGrid(std::ceil((M_ * N_) / 256.0), 1, 1);
   dim3 DimBlock(256, 1, 1);
   matDTanh<<<DimGrid,DimBlock>>>(a_d_.get(), this->M_ * this->N_);
@@ -275,15 +237,15 @@ CudaMatrix& CudaMatrix::d_relu() {
 }
 
 // WORK
-CudaMatrix& CudaMatrix::reshape(size_t M, size_t N) {
+CudaMatrix CudaMatrix::reshape(size_t M, size_t N) {
   if (M_ * N_ != M * N)
     throw std::runtime_error("Bad Reshape");
 
-  CudaMatrix *out = new CudaMatrix(*this);
-  out->M_ = M;
-  out->N_ = N;
+  CudaMatrix out = CudaMatrix(*this);
+  out.M_ = M;
+  out.N_ = N;
 
-  return *out;
+  return out;
 }
 
 // WORK
@@ -303,30 +265,30 @@ void CudaMatrix::randomize() {
 }
 
 // WORK
-CudaMatrix& CudaMatrix::rows(size_t start, size_t end) const {
-  CudaMatrix* c = new CudaMatrix(handle_, end - start, N_);
+CudaMatrix CudaMatrix::rows(size_t start, size_t end) const {
+  auto c = CudaMatrix(handle_, end - start, N_);
 
   dim3 DimGrid(std::ceil((M_ * N_) / 256.0), 1, 1);
   dim3 DimBlock(256, 1, 1);
-  rowGetter<<<DimGrid,DimBlock>>>(a_d_.get(), c->a_d_.get(), start, end, N_);
+  rowGetter<<<DimGrid,DimBlock>>>(a_d_.get(), c.a_d_.get(), start, end, N_);
 
   sync_device();
 
-  return *c;
+  return c;
 }
 
 // WORK
-CudaMatrix& CudaMatrix::rows(std::vector<size_t>& indices) const {
-  CudaMatrix* c = new CudaMatrix(handle_, indices.size(), N_);
+CudaMatrix CudaMatrix::rows(std::vector<size_t>& indices) const {
+  auto c = CudaMatrix(handle_, indices.size(), N_);
 
   dim3 DimGrid(std::ceil((M_ * N_) / 256.0), 1, 1);
   dim3 DimBlock(256, 1, 1);
   for (size_t i = 0; i < indices.size(); ++i)
-    rowGetter<<<DimGrid,DimBlock>>>(a_d_.get(), c->a_d_.get() + i * N_, indices[i], indices[i] + 1, N_);
+    rowGetter<<<DimGrid,DimBlock>>>(a_d_.get(), c.a_d_.get() + i * N_, indices[i], indices[i] + 1, N_);
 
   sync_device();
 
-  return *c;
+  return c;
 }
 
 // WORK
@@ -335,8 +297,8 @@ float CudaMatrix::accu() const {
 }
 
 // WORK
-CudaMatrix& CudaMatrix::addBias() {
-  CudaMatrix& out = ones(this->M_, this->N_ + 1, handle_);
+CudaMatrix CudaMatrix::addBias() {
+  auto out = ones(this->M_, this->N_ + 1, handle_);
 
   for (size_t i = 0; i < this->M_; ++i)
     CudaSafeCall(cudaMemcpy(out.a_d_.get() + i * (this->N_ + 1), this->a_d_.get() + i * N_, N_ * sizeof (float), cudaMemcpyDeviceToDevice));
