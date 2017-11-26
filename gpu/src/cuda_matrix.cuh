@@ -71,6 +71,9 @@ class CudaMatrix {
 
     //set mat
     void setMat(float* arr) { a_d_ = std::shared_ptr<float>(arr, cudaFree); };
+    
+    //get mat
+    std::shared_ptr<float> getMat() { return a_d_; };
 
     //Sums up all the elements of the matrix
     float accu() const;

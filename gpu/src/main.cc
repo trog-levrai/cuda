@@ -23,13 +23,12 @@ int main() {
     mat X_(handle, 2, 4, X);
 
     X_ = X_.t();
-    
     y = y.t();
 
     Model M(handle);
     M.add(1, 2, "relu");
 
-    M.train(X_, y, 1000, 0.1);
+    M.train(X_, y, 100, 0.1);
 
     M.forward(X_).print();
   }
