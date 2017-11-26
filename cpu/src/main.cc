@@ -68,7 +68,7 @@ int main() {
   std::cout << X;
   std::cout << y;
 
-  M.train(X, y, 100, 0.1);
+  M.train(X, y, 10000, 0.1);
 
   std::cout << M.forward(X);
   //std::cout << y << std::endl;

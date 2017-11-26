@@ -3,6 +3,12 @@
 # include <stdlib.h>
 # include <cmath>
 
+void sync_device() {
+  cudaError_t stat_ = cudaDeviceSynchronize();
+  if (stat_ != cudaSuccess)
+    throw std::runtime_error("Device synchrnization failed");
+}
+
 CudaMatrix& ones(size_t M, size_t N, cublasHandle_t handle) {
   CudaMatrix* out = new CudaMatrix(handle, M, N);
   cudaMemset((void**)out->getMat().get(), 0, M * N * sizeof(float));
@@ -105,25 +111,19 @@ CudaMatrix& CudaMatrix::operator*(const CudaMatrix& m) const {
   float* alpha = &al;
   float* beta = &be;
 
-  cudaError_t stat_ = cudaDeviceSynchronize();
-  if (stat_ != cudaSuccess)
-    throw std::runtime_error("Device synchrnization failed");
+  sync_device();
 
   cublasStatus_t stat = cublasSgemm(handle_, CUBLAS_OP_N, CUBLAS_OP_N, m_, n_, k_, alpha, a, lda, b, ldb, beta, c, ldc);
   if (stat != CUBLAS_STATUS_SUCCESS)
     throw std::runtime_error("Matrix dot product failed");
 
-  stat_ = cudaDeviceSynchronize();
-  if (stat_ != cudaSuccess)
-    throw std::runtime_error("Device synchrnization failed");
+  sync_device();
 
   DimGrid = dim3(std::ceil((M_ * m.N_) / 256.0), 1, 1);
   DimBlock = dim3(256, 1, 1);
   colToRow<<<DimGrid,DimBlock>>>(c, out->a_d_.get(), m.N_, M_);
   
-  stat_ = cudaDeviceSynchronize();
-  if (stat_ != cudaSuccess)
-    throw std::runtime_error("Device synchrnization failed");
+  sync_device();
 
   return *out;
 }
@@ -157,9 +157,7 @@ CudaMatrix& CudaMatrix::operator*(float x) const {
   CudaMatrix *c = new CudaMatrix(*this);
   cublasStatus_t stat = cublasSscal(handle_, c->M_ * c->N_, &x, c->a_d_.get(), 1);
 
-  cudaError_t stat_ = cudaDeviceSynchronize();
-  if (stat_ != cudaSuccess)
-    throw std::runtime_error("Device synchrnization failed");
+  sync_device();
 
   if (stat != CUBLAS_STATUS_SUCCESS)
     throw std::runtime_error("Matrix multiplication with scalar failed");
@@ -178,9 +176,7 @@ CudaMatrix& CudaMatrix::operator%(const CudaMatrix& m) const {
   dim3 DimBlock(256, 1, 1);
   vecMulKernel<<<DimGrid,DimBlock>>>(a_d_.get(), m.a_d_.get(), c->a_d_.get(), M_ * N_);
 
-  cudaError_t stat_ = cudaDeviceSynchronize();
-  if (stat_ != cudaSuccess)
-    throw std::runtime_error("Device synchrnization failed");
+  sync_device();
 
   return *c;
 }
@@ -191,13 +187,15 @@ CudaMatrix& CudaMatrix::operator+(const CudaMatrix& m) const {
     this->print_shape("this\t");
     m.print_shape("m\t");
   }
+
   CudaMatrix *c = new CudaMatrix(handle_, m.M_, m.N_);
+
   dim3 DimGrid(std::ceil((M_ * N_) / 256.0), 1, 1);
   dim3 DimBlock(256, 1, 1);
   vecAddKernel<<<DimGrid,DimBlock>>>(a_d_.get(), m.a_d_.get(), c->a_d_.get(), M_ * N_);
-  cudaError_t stat = cudaDeviceSynchronize();
-  if (stat != cudaSuccess)
-    throw std::runtime_error("Device synchrnization failed");
+
+  sync_device();
+
   return *c;
 }
 
@@ -213,30 +211,28 @@ CudaMatrix& CudaMatrix::operator-(const CudaMatrix& m) const {
     if (M_ == 1) {
       //This instance is a rowvec
       c = new CudaMatrix(handle_, m.M_, m.N_);
-      for (size_t i = 0; i < m.M_; ++i) {
+
+      // FIXME
+      for (size_t i = 0; i < m.M_; ++i)
         vecSubKernel<<<DimGrid,DimBlock>>>(a_d_.get(), m.a_d_.get() + i * m.N_, c->a_d_.get() + i * m.N_, N_);
-        cudaError_t stat = cudaDeviceSynchronize();
-        if (stat != cudaSuccess)
-          throw std::runtime_error("Device synchrnization failed");
-      }
+
+      sync_device();
     } else if (m.M_ == 1) {
       //m instance is a rowvec
       c = new CudaMatrix(handle_, M_, N_);
+
+      // FIXME
       for (size_t i = 0; i < M_; ++i) {
         vecSubKernel<<<DimGrid,DimBlock>>>(a_d_.get() + i * N_, m.a_d_.get(), c->a_d_.get() + i * N_, N_);
-        cudaError_t stat = cudaDeviceSynchronize();
-        if (stat != cudaSuccess)
-          throw std::runtime_error("Device synchrnization failed");
       }
+      sync_device();
     } else {
       return (this->t() - m.t()).t();
     }
   } else {
     c = new CudaMatrix(handle_, M_, N_);
     vecSubKernel<<<DimGrid,DimBlock>>>(a_d_.get(), m.a_d_.get(), c->a_d_.get(), M_ * N_);
-    cudaError_t stat = cudaDeviceSynchronize();
-    if (stat != cudaSuccess)
-      throw std::runtime_error("Device synchrnization failed");
+    sync_device();
   }
   return *c;
 }
@@ -244,37 +240,38 @@ CudaMatrix& CudaMatrix::operator-(const CudaMatrix& m) const {
 // WORK
 CudaMatrix& CudaMatrix::operator+(float m) const {
   CudaMatrix* c = new CudaMatrix(handle_, M_, N_);
+
   dim3 DimGrid(std::ceil((M_ * N_) / 256.0), 1, 1);
   dim3 DimBlock(256, 1, 1);
   scalarAddKernel<<<DimGrid,DimBlock>>>(a_d_.get(), m, c->a_d_.get(), M_ * N_);
-  cudaError_t stat = cudaDeviceSynchronize();
-  if (stat != cudaSuccess)
-    throw std::runtime_error("Device synchrnization failed");
+
+  sync_device();
+
   return *c;
 }
 
 // WORK
 CudaMatrix& CudaMatrix::operator-(float m) const {
   CudaMatrix* c = new CudaMatrix(handle_, M_, N_);
+
   dim3 DimGrid(std::ceil((M_ * N_) / 256.0), 1, 1);
   dim3 DimBlock(256, 1, 1);
   scalarAddKernel<<<DimGrid,DimBlock>>>(a_d_.get(), -m, c->a_d_.get(), M_ * N_);
-  cudaError_t stat = cudaDeviceSynchronize();
-  if (stat != cudaSuccess)
-    throw std::runtime_error("Device synchrnization failed");
+
+  sync_device();
+
   return *c;
 }
 
 // WORK
 CudaMatrix& CudaMatrix::t() const {
   CudaMatrix* c = new CudaMatrix(handle_, N_, M_);
+
   float alpha = 1.;
   float beta = 0.;
   cublasStatus_t stat = cublasSgeam(handle_, CUBLAS_OP_T, CUBLAS_OP_T, M_, N_, &alpha, this->a_d_.get(), N_, &beta, this->a_d_.get(), N_, c->a_d_.get(), M_);
 
-  cudaError_t stat_ = cudaDeviceSynchronize();
-  if (stat_ != cudaSuccess)
-    throw std::runtime_error("Device synchrnization failed");
+  sync_device();
 
   if (stat != CUBLAS_STATUS_SUCCESS)
     throw std::runtime_error("Matrix transposition failed");
@@ -285,9 +282,9 @@ CudaMatrix& CudaMatrix::transform(float (*f)(float)) {
   dim3 DimGrid(std::ceil((M_ * N_) / 256.0), 1, 1);
   dim3 DimBlock(256, 1, 1);
   matTransformKernel<<<DimGrid,DimBlock>>>(a_d_.get(), f, this->M_ * this->N_);
-  cudaError_t stat = cudaDeviceSynchronize();
-  if (stat != cudaSuccess)
-    throw std::runtime_error("Device synchrnization failed");
+
+  sync_device();
+
   return *this;
 }
 
@@ -296,9 +293,9 @@ CudaMatrix& CudaMatrix::relu() {
   dim3 DimGrid(std::ceil((M_ * N_) / 256.0), 1, 1);
   dim3 DimBlock(256, 1, 1);
   matTanh<<<DimGrid,DimBlock>>>(a_d_.get(), this->M_ * this->N_);
-  cudaError_t stat = cudaDeviceSynchronize();
-  if (stat != cudaSuccess)
-    throw std::runtime_error("Device synchrnization failed");
+
+  sync_device();
+
   return *this;
 }
 
@@ -307,9 +304,9 @@ CudaMatrix& CudaMatrix::d_relu() {
   dim3 DimGrid(std::ceil((M_ * N_) / 256.0), 1, 1);
   dim3 DimBlock(256, 1, 1);
   matDTanh<<<DimGrid,DimBlock>>>(a_d_.get(), this->M_ * this->N_);
-  cudaError_t stat = cudaDeviceSynchronize();
-  if (stat != cudaSuccess)
-    throw std::runtime_error("Device synchrnization failed");
+
+  sync_device();
+
   return *this;
 }
 
@@ -331,34 +328,39 @@ void CudaMatrix::randomize() {
     throw std::runtime_error("Device memory allocation failed");
 
   init<<<M_ * N_, 1>>>(time(0), states);
+
+  sync_device();
+
   dim3 DimGrid(std::ceil((M_ * N_) / 256.0), 1, 1);
   dim3 DimBlock(256, 1, 1);
   randomizeKernel<<<DimGrid,DimBlock>>>(states, a_d_.get(), M_ * N_);
+
+  sync_device();
 }
 
 // WORK
 CudaMatrix& CudaMatrix::rows(size_t start, size_t end) const {
   CudaMatrix* c = new CudaMatrix(handle_, end - start, N_);
+
   dim3 DimGrid(std::ceil((M_ * N_) / 256.0), 1, 1);
   dim3 DimBlock(256, 1, 1);
   rowGetter<<<DimGrid,DimBlock>>>(a_d_.get(), c->a_d_.get(), start, end, N_);
-  cudaError_t stat = cudaDeviceSynchronize();
-  if (stat != cudaSuccess)
-    throw std::runtime_error("Device synchrnization failed");
+
+  sync_device();
+
   return *c;
 }
 
 // WORK
 CudaMatrix& CudaMatrix::rows(std::vector<size_t>& indices) const {
   CudaMatrix* c = new CudaMatrix(handle_, indices.size(), N_);
+
   dim3 DimGrid(std::ceil((M_ * N_) / 256.0), 1, 1);
   dim3 DimBlock(256, 1, 1);
   for (size_t i = 0; i < indices.size(); ++i)
     rowGetter<<<DimGrid,DimBlock>>>(a_d_.get(), c->a_d_.get() + i * N_, indices[i], indices[i] + 1, N_);
 
-  cudaError_t stat = cudaDeviceSynchronize();
-  if (stat != cudaSuccess)
-    throw std::runtime_error("Device synchrnization failed");
+  sync_device();
 
   return *c;
 }
@@ -378,9 +380,7 @@ CudaMatrix& CudaMatrix::addBias() {
       throw std::runtime_error(cudaGetErrorString(cudaStat));
   }
 
-  cudaError_t stat = cudaDeviceSynchronize();
-  if (stat != cudaSuccess)
-    throw std::runtime_error("Device synchrnization failed");
+  sync_device();
 
   return out;
 }
