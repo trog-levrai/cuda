@@ -23,7 +23,6 @@ CudaMatrix::~CudaMatrix() {
 }
 
 CudaMatrix::CudaMatrix(cublasHandle_t handle, size_t M, size_t N, const float* a_h) {
-  cublasStatus_t stat;
   this->handle_ = handle;
   this->M_ = M;
   this->N_ = N;
@@ -33,12 +32,7 @@ CudaMatrix::CudaMatrix(cublasHandle_t handle, size_t M, size_t N, const float* a
 
   this->a_d_ = std::shared_ptr<float>(a_d_tmp, cudaFree);
 
-  stat = cublasSetMatrix(M, N, sizeof (float), a_h, M, a_d_.get(), M);
-  if (stat != CUBLAS_STATUS_SUCCESS) {
-    cudaFree(a_d_.get());
-    cublasDestroy(handle);
-    throw std::runtime_error("data download failed");
-  }
+  CublasSafeCall(cublasSetMatrix(M, N, sizeof (float), a_h, M, a_d_.get(), M));
 }
 
 CudaMatrix::CudaMatrix(cublasHandle_t handle, size_t M, size_t N) {
@@ -97,9 +91,7 @@ CudaMatrix& CudaMatrix::operator*(const CudaMatrix& m) const {
 
   sync_device();
 
-  cublasStatus_t stat = cublasSgemm(handle_, CUBLAS_OP_N, CUBLAS_OP_N, m_, n_, k_, alpha, a, lda, b, ldb, beta, c, ldc);
-  if (stat != CUBLAS_STATUS_SUCCESS)
-    throw std::runtime_error("Matrix dot product failed");
+  CublasSafeCall(cublasSgemm(handle_, CUBLAS_OP_N, CUBLAS_OP_N, m_, n_, k_, alpha, a, lda, b, ldb, beta, c, ldc));
 
   sync_device();
 
@@ -134,12 +126,9 @@ CudaMatrix& CudaMatrix::operator=(const CudaMatrix& m) {
 // WORK
 CudaMatrix& CudaMatrix::operator*(float x) const {
   CudaMatrix *c = new CudaMatrix(*this);
-  cublasStatus_t stat = cublasSscal(handle_, c->M_ * c->N_, &x, c->a_d_.get(), 1);
+  CublasSafeCall(cublasSscal(handle_, c->M_ * c->N_, &x, c->a_d_.get(), 1));
 
   sync_device();
-
-  if (stat != CUBLAS_STATUS_SUCCESS)
-    throw std::runtime_error("Matrix multiplication with scalar failed");
 
   return *c;
 }
@@ -149,7 +138,9 @@ CudaMatrix& CudaMatrix::operator%(const CudaMatrix& m) const {
   if (this->shape() != m.shape()) {
     this->print_shape("this\t");
     m.print_shape("m\t");
+    exit(-1);
   }
+
   CudaMatrix *c = new CudaMatrix(handle_, M_, m.N_);
   dim3 DimGrid(std::ceil((M_ * N_) / 256.0), 1, 1);
   dim3 DimBlock(256, 1, 1);
@@ -181,6 +172,8 @@ CudaMatrix& CudaMatrix::operator+(const CudaMatrix& m) const {
 // WORK
 CudaMatrix& CudaMatrix::operator-(const CudaMatrix& m) const {
   CudaMatrix* c;
+
+  // FIXME
   dim3 DimGrid(std::ceil((M_ * N_) / 256.0), 1, 1);
   dim3 DimBlock(256, 1, 1);
   //This case is vector to matrix.
@@ -293,9 +286,11 @@ CudaMatrix& CudaMatrix::d_relu() {
 CudaMatrix& CudaMatrix::reshape(size_t M, size_t N) {
   if (M_ * N_ != M * N)
     throw std::runtime_error("Bad Reshape");
+
   CudaMatrix *out = new CudaMatrix(*this);
   out->M_ = M;
   out->N_ = N;
+
   return *out;
 }
 
