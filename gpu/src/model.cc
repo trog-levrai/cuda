@@ -57,14 +57,16 @@ void Model::add(size_t output_units, std::string activ) {
 }
 
 const mat Model::forward(const mat& X) {
+  // FIXME
   mat X_c(X);
   size_t i = 0;
   for (auto& W_ : this->W) {
     if (this->type[i] == "dense") {
       X_c = X_c.addBias();
 
+      //this->o_buff = X_c.mult_buff(W_, o_buff);
+      //X_c = this->activate(o_buff, this->activate_vec[i]);
       mat o = X_c * W_;
-
       X_c = this->activate(o, this->activate_vec[i]);
     }
     ++i;
@@ -77,16 +79,23 @@ mat Model::forward_keep(const mat& X) {
   this->H.clear();
   this->C.clear();
 
+  // FIXME
   mat X_c(X);
   size_t i = 0;
-  for (auto& W_ : this->W) {
+  for (auto& W_: this->W) {
     X_c = X_c.addBias();
     this->C.push_back(mat(X_c));
 
+    /*
+    this->o_buff = X_c.mult_buff(W_, o_buff);
+    this->H.push_back(mat(o_buff));
+    X_c = this->activate(o_buff, this->activate_vec[i]);
+    */
+    
     mat o = X_c * W_;
     this->H.push_back(mat(o));
-
     X_c = this->activate(o, this->activate_vec[i]);
+
     ++i;
   }
   this->C.push_back(X_c);
@@ -140,7 +149,7 @@ const float Model::loss(const mat& X, const mat& y) {
 }
 
 void Model::train(const mat& X, const mat& y, size_t nb_epoch, float lr) {
-  const size_t batch_size = 64;
+  const size_t batch_size = 4;
 
   if (this->W.empty())
     throw std::runtime_error("An model has no input layer");
@@ -160,6 +169,7 @@ void Model::train(const mat& X, const mat& y, size_t nb_epoch, float lr) {
       size_t b = j * batch_size;
       for (auto it = b; it < b + batch_size && it < shuffle.size(); ++it)
         indices.push_back(shuffle[it]);
+
       this->forward_keep(X.rows(indices));
       this->back_propagate(lr, y.rows(indices));
     }
@@ -171,4 +181,18 @@ void Model::train(const mat& X, const mat& y, size_t nb_epoch, float lr) {
 
 void Model::train(const mat& X, const mat& y, size_t nb_epoch) {
   this->train(X, y, nb_epoch, 0.1);
+}
+
+void Model::compile() {
+  size_t max_n = this->W[0].N_;
+  size_t max_m = this->W[0].M_;
+
+  for (size_t j = 1; j < this->W.size(); ++j) {
+    if (max_n < W[j].N_)
+        max_n = W[j].N_;
+    if (max_m < W[j].M_)
+        max_m = W[j].M_;
+  }
+
+  this->o_buff = mat(this->handle_, max_m + 1, max_n + 1);
 }

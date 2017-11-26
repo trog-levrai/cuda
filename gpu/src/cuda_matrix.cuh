@@ -27,6 +27,9 @@ class CudaMatrix {
     //Dot product of matrix
     CudaMatrix& operator*(const CudaMatrix&) const;
     
+    //Doc product without realloc
+    CudaMatrix& mult_buff(const CudaMatrix& m, CudaMatrix& o) const;
+    
     //Dot product of matrix
     CudaMatrix& dot(const CudaMatrix&, float al) const;
 

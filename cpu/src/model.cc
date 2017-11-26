@@ -223,7 +223,7 @@ const float Model::loss(const mat& X, const mat& y) {
 }
 
 void Model::train(const mat& X, const mat& y, size_t nb_epoch, float lr) {
-  const size_t batch_size = 1;
+  const size_t batch_size = 4;
 
   if (this->W.empty())
     throw std::runtime_error("An model has no input layer");
@@ -242,7 +242,12 @@ void Model::train(const mat& X, const mat& y, size_t nb_epoch, float lr) {
       arma::uvec indices;
       size_t b = j * batch_size;
       for (size_t it = b; it < b + batch_size && it < shuffle.size(); ++it)
-        indices << shuffle[it];
+      {
+        arma::uvec av(1);
+        av.at(0) = it;
+        indices.insert_rows(indices.n_rows, av.row(0));
+      }
+
       this->forward_keep(X.rows(indices));
       this->back_propagate(lr, y.rows(indices));
 

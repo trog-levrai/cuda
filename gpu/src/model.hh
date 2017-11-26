@@ -22,7 +22,7 @@ class Model {
 
   public:
     Model(cublasHandle_t handle)
-    :handle_(handle){};
+    :handle_(handle), o_buff(handle_, 1, 1){}
 
     void add(size_t output_units);
     void add(size_t output_units, size_t input_units);
@@ -32,12 +32,16 @@ class Model {
 
     void add_max_POOL();
 
+    void compile();
+
     void train(const mat& X, const mat& y, size_t nb_epoch, float lr);
     void train(const mat& X, const mat& y, size_t nb_epoch);
     const mat forward(const mat& X);
     const float loss(const mat& X, const mat& y);
 
   private:
+    mat o_buff;
+
     void init_W(size_t input, size_t output);
 
     const mat activate(mat&, const std::string func);

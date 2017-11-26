@@ -62,11 +62,26 @@ CudaMatrix& CudaMatrix::operator*(const CudaMatrix& m) const {
   float beta = 0.;
   CudaMatrix* c = new CudaMatrix(handle_, M_, m.N_);
 
-  cublasStatus_t stat = cublasSgemm(handle_, CUBLAS_OP_N, CUBLAS_OP_N, m.N_, M_, N_, &alpha, m.a_d_.get(), m.N_, a_d_.get(), N_, &beta, c->a_d_.get(), m.N_);
-  if (stat != CUBLAS_STATUS_SUCCESS)
-    throw std::runtime_error("Matrix dot product failed");
+  CublasSafeCall(cublasSgemm(handle_, CUBLAS_OP_N, CUBLAS_OP_N, m.N_, M_, N_, &alpha, m.a_d_.get(), m.N_, a_d_.get(), N_, &beta, c->a_d_.get(), m.N_));
+
   sync_device();
+
   return *c;
+}
+
+// WORK
+CudaMatrix& CudaMatrix::mult_buff(const CudaMatrix& m, CudaMatrix& o) const {
+  float alpha = 1.;
+  float beta = 0.;
+
+  o.M_ = this->M_;
+  o.N_ = m.N_;
+
+  CublasSafeCall(cublasSgemm(handle_, CUBLAS_OP_N, CUBLAS_OP_N, m.N_, M_, N_, &alpha, m.a_d_.get(), m.N_, a_d_.get(), N_, &beta, o.a_d_.get(), m.N_));
+
+  sync_device();
+
+  return o;
 }
 
 // WORK
@@ -74,10 +89,10 @@ CudaMatrix& CudaMatrix::dot(const CudaMatrix& m, float alpha) const {
   float beta = 0.;
   CudaMatrix* c = new CudaMatrix(handle_, M_, m.N_);
 
-  cublasStatus_t stat = cublasSgemm(handle_, CUBLAS_OP_N, CUBLAS_OP_N, m.N_, M_, N_, &alpha, m.a_d_.get(), m.N_, a_d_.get(), N_, &beta, c->a_d_.get(), m.N_);
-  if (stat != CUBLAS_STATUS_SUCCESS)
-    throw std::runtime_error("Matrix dot product failed");
+  CublasSafeCall(cublasSgemm(handle_, CUBLAS_OP_N, CUBLAS_OP_N, m.N_, M_, N_, &alpha, m.a_d_.get(), m.N_, a_d_.get(), N_, &beta, c->a_d_.get(), m.N_));
+
   sync_device();
+
   return *c;
 }
 
@@ -89,8 +104,6 @@ CudaMatrix& CudaMatrix::operator=(const CudaMatrix& m) {
   this->N_ = m.N_;
   this->a_d_ = std::shared_ptr<float>(m.getMat());
 
-  CudaSafeCall(cudaMemcpy(this->a_d_.get(), m.a_d_.get(), m.M_ * m.N_ * sizeof (float), cudaMemcpyDeviceToDevice));
-  
   return *this;
 }
 
@@ -342,6 +355,7 @@ void CudaMatrix::print() const {
     }
     std::cout << "\n";
   }
+  std::cout << "\n";
 }
 
 std::pair<size_t, size_t> CudaMatrix::shape() const {
