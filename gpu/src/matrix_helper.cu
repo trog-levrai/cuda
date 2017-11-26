@@ -69,23 +69,3 @@ __global__ void matDTanh(float* a, int n) {
     a[i] = 1. - x * x;
   }
 }
-
-__global__ void rowToCol(float* s, float* d, int n, int m) {
-  int k = threadIdx.x + blockDim.x * blockIdx.x;
-  if (k < n * m) {
-    int i = k / n;
-    int j = k % n;
-
-    d[i + j * m] = s[i * n + j];
-  }
-}
-
-__global__ void colToRow(float* s, float* d, int n, int m) {
-  int k = threadIdx.x + blockDim.x * blockIdx.x;
-  if (k < n * m) {
-    int i = k / n;
-    int j = k % n;
-
-    d[i * n + j] = s[i + j * m];
-  }
-}

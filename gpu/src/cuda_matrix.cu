@@ -57,59 +57,34 @@ CudaMatrix::CudaMatrix(const CudaMatrix& m) {
 }
 
 // WORK
-CudaMatrix& CudaMatrix::dot(const CudaMatrix& m, float al) const {
-  float *a;
-  float *b;
-  float *c;
-  
-  CudaSafeCall(cudaMalloc((void**)&a, M_ * N_ * sizeof (float)));
-  CudaSafeCall(cudaMalloc((void**)&b, m.M_ * m.N_ * sizeof (float)));
-  CudaSafeCall(cudaMalloc((void**)&c, M_ * m.N_ * sizeof (float)));
+CudaMatrix& CudaMatrix::operator*(const CudaMatrix& m) const {
+  float alpha = 1.;
+  float beta = 0.;
+  CudaMatrix* c = new CudaMatrix(handle_, M_, m.N_);
 
-  dim3 DimGrid(std::ceil((M_ * N_) / 256.0), 1, 1);
-  dim3 DimBlock(256, 1, 1);
-  rowToCol<<<DimGrid,DimBlock>>>(a_d_.get(), a, N_, M_);
-
-  DimGrid = dim3(std::ceil((m.M_ * m.N_) / 256.0), 1, 1);
-  DimBlock = dim3(256, 1, 1);
-  rowToCol<<<DimGrid,DimBlock>>>(m.a_d_.get(), b, m.N_, m.M_);
-
-  int m_ = M_;
-  int k_ = N_;
-  int n_ = m.N_;
-
-  int lda = m_;
-  int ldb = k_;
-  int ldc = m_;
-  CudaMatrix* out = new CudaMatrix(handle_, m_, n_);
-
-  float be = 0.;
-
-  float* alpha = &al;
-  float* beta = &be;
-
+  cublasStatus_t stat = cublasSgemm(handle_, CUBLAS_OP_N, CUBLAS_OP_N, m.N_, M_, N_, &alpha, m.a_d_.get(), m.N_, a_d_.get(), N_, &beta, c->a_d_.get(), m.N_);
+  if (stat != CUBLAS_STATUS_SUCCESS)
+    throw std::runtime_error("Matrix dot product failed");
   sync_device();
-
-  CublasSafeCall(cublasSgemm(handle_, CUBLAS_OP_N, CUBLAS_OP_N, m_, n_, k_, alpha, a, lda, b, ldb, beta, c, ldc));
-
-  sync_device();
-
-  DimGrid = dim3(std::ceil((M_ * m.N_) / 256.0), 1, 1);
-  DimBlock = dim3(256, 1, 1);
-  colToRow<<<DimGrid,DimBlock>>>(c, out->a_d_.get(), m.N_, M_);
-  
-  sync_device();
-
-  return *out;
+  return *c;
 }
 
 // WORK
-CudaMatrix& CudaMatrix::operator*(const CudaMatrix& m) const {
-  return this->dot(m, 1.0);
+CudaMatrix& CudaMatrix::dot(const CudaMatrix& m, float alpha) const {
+  float beta = 0.;
+  CudaMatrix* c = new CudaMatrix(handle_, M_, m.N_);
+
+  cublasStatus_t stat = cublasSgemm(handle_, CUBLAS_OP_N, CUBLAS_OP_N, m.N_, M_, N_, &alpha, m.a_d_.get(), m.N_, a_d_.get(), N_, &beta, c->a_d_.get(), m.N_);
+  if (stat != CUBLAS_STATUS_SUCCESS)
+    throw std::runtime_error("Matrix dot product failed");
+  sync_device();
+  return *c;
 }
 
 // WORK
 CudaMatrix& CudaMatrix::operator=(const CudaMatrix& m) {
+  CudaMatrix* n = new CudaMatrix(handle_, m.M_, m.N_);
+
   this->M_ = m.M_;
   this->N_ = m.N_;
   this->a_d_ = std::shared_ptr<float>(m.getMat());

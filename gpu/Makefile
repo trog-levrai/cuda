@@ -11,7 +11,7 @@ all:
 check: all
 	./$(BIN)
 
-unit:
+unit: clean
 	$(CPP) $(UNIT) $(CPPFLAGS) -o $(UBIN)
 	./$(UBIN)
 
