@@ -57,7 +57,7 @@ CudaMatrix::CudaMatrix(const CudaMatrix& m) {
 }
 
 // WORK
-CudaMatrix& CudaMatrix::operator*(const CudaMatrix& m) const {
+CudaMatrix& CudaMatrix::dot(const CudaMatrix& m, float al) const {
   float *a;
   float *b;
   float *c;
@@ -83,7 +83,6 @@ CudaMatrix& CudaMatrix::operator*(const CudaMatrix& m) const {
   int ldc = m_;
   CudaMatrix* out = new CudaMatrix(handle_, m_, n_);
 
-  float al = 1.;
   float be = 0.;
 
   float* alpha = &al;
@@ -102,6 +101,11 @@ CudaMatrix& CudaMatrix::operator*(const CudaMatrix& m) const {
   sync_device();
 
   return *out;
+}
+
+// WORK
+CudaMatrix& CudaMatrix::operator*(const CudaMatrix& m) const {
+  return this->dot(m, 1.0);
 }
 
 // WORK
@@ -174,8 +178,6 @@ CudaMatrix& CudaMatrix::operator-(const CudaMatrix& m) const {
   CudaMatrix* c;
 
   // FIXME
-  dim3 DimGrid(std::ceil((M_ * N_) / 256.0), 1, 1);
-  dim3 DimBlock(256, 1, 1);
   //This case is vector to matrix.
   if (this->shape() != m.shape()) {
     this->print_shape("this\t");
@@ -185,6 +187,10 @@ CudaMatrix& CudaMatrix::operator-(const CudaMatrix& m) const {
       c = new CudaMatrix(handle_, m.M_, m.N_);
 
       // FIXME
+
+      dim3 DimGrid(std::ceil((N_) / 256.0), 1, 1);
+      dim3 DimBlock(256, 1, 1);
+
       for (size_t i = 0; i < m.M_; ++i)
         vecSubKernel<<<DimGrid,DimBlock>>>(a_d_.get(), m.a_d_.get() + i * m.N_, c->a_d_.get() + i * m.N_, N_);
 
@@ -192,6 +198,9 @@ CudaMatrix& CudaMatrix::operator-(const CudaMatrix& m) const {
     } else if (m.M_ == 1) {
       //m instance is a rowvec
       c = new CudaMatrix(handle_, M_, N_);
+
+      dim3 DimGrid(std::ceil((N_) / 256.0), 1, 1);
+      dim3 DimBlock(256, 1, 1);
 
       // FIXME
       for (size_t i = 0; i < M_; ++i) {
@@ -202,6 +211,9 @@ CudaMatrix& CudaMatrix::operator-(const CudaMatrix& m) const {
       return (this->t() - m.t()).t();
     }
   } else {
+    dim3 DimGrid(std::ceil((N_ * M_) / 256.0), 1, 1);
+    dim3 DimBlock(256, 1, 1);
+
     c = new CudaMatrix(handle_, M_, N_);
     vecSubKernel<<<DimGrid,DimBlock>>>(a_d_.get(), m.a_d_.get(), c->a_d_.get(), M_ * N_);
     sync_device();

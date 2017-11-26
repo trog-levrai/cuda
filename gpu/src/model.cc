@@ -128,7 +128,7 @@ void Model::back_propagate(float lambda, const mat truth) {
   for (size_t i = 0; i < this->W.size(); ++i) {
     if (this->type[i] != "pool")
     {
-      mat tmp = (err[i].t() * this->C[i] * lambda);
+      mat tmp = err[i].t().dot(this->C[i], lambda);
       this->W[i] = this->W[i] + tmp.t();
     }
   }
@@ -136,7 +136,7 @@ void Model::back_propagate(float lambda, const mat truth) {
 
 const float Model::loss(const mat& X, const mat& y) {
   mat out = this->forward(X);
-  out = (out - y);
+  out = out - y;
   out = out % out;
   return out.accu() / y.M_;
 }

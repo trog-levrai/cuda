@@ -26,13 +26,16 @@ class CudaMatrix {
 
     //Dot product of matrix
     CudaMatrix& operator*(const CudaMatrix&) const;
+    
+    //Dot product of matrix
+    CudaMatrix& dot(const CudaMatrix&, float al) const;
 
     //Assignement operator
     CudaMatrix& operator=(const CudaMatrix&);
 
     //Multiplication with a scalar
     CudaMatrix& operator*(float) const;
-
+    
     //Cell-wise multiplication
     CudaMatrix& operator%(const CudaMatrix&) const;
 
