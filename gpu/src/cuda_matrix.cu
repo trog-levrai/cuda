@@ -110,21 +110,13 @@ CudaMatrix& CudaMatrix::operator*(const CudaMatrix& m) const {
 
 // WORK
 CudaMatrix& CudaMatrix::operator=(const CudaMatrix& m) {
-  CudaMatrix* n = new CudaMatrix(handle_, m.M_, m.N_);
-
-  CudaSafeCall(cudaMemcpy(n->a_d_.get(), m.a_d_.get(), m.M_ * m.N_ * sizeof (float), cudaMemcpyDeviceToDevice));
-  
   this->M_ = m.M_;
   this->N_ = m.N_;
-
-  float *a_d_tmp;
-  CudaSafeCall(cudaMalloc((void**)&a_d_tmp, m.M_ * m.N_ * sizeof (float)));
-
-  this->a_d_ = std::shared_ptr<float>(a_d_tmp, cudaFree);
+  this->a_d_ = std::shared_ptr<float>(m.getMat());
 
   CudaSafeCall(cudaMemcpy(this->a_d_.get(), m.a_d_.get(), m.M_ * m.N_ * sizeof (float), cudaMemcpyDeviceToDevice));
   
-  return *n;
+  return *this;
 }
 
 // WORK
