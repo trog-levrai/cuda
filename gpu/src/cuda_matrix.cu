@@ -1,4 +1,6 @@
 # include "cuda_matrix.cuh"
+# include "cuda_error.hh"
+
 # include <iostream>
 # include <stdlib.h>
 # include <cmath>
@@ -21,18 +23,15 @@ CudaMatrix::~CudaMatrix() {
 }
 
 CudaMatrix::CudaMatrix(cublasHandle_t handle, size_t M, size_t N, const float* a_h) {
-  cudaError_t cudaStat;
   cublasStatus_t stat;
   this->handle_ = handle;
   this->M_ = M;
   this->N_ = N;
   float *a_d_tmp;
-  cudaStat = cudaMalloc ((void**)&a_d_tmp, M * N * sizeof (float));
+
+  CudaSafeCall(cudaMalloc ((void**)&a_d_tmp, M * N * sizeof (float)));
 
   this->a_d_ = std::shared_ptr<float>(a_d_tmp, cudaFree);
-
-  if (cudaStat != cudaSuccess)
-    throw std::runtime_error("Device memory allocation failed");
 
   stat = cublasSetMatrix(M, N, sizeof (float), a_h, M, a_d_.get(), M);
   if (stat != CUBLAS_STATUS_SUCCESS) {
@@ -43,31 +42,24 @@ CudaMatrix::CudaMatrix(cublasHandle_t handle, size_t M, size_t N, const float* a
 }
 
 CudaMatrix::CudaMatrix(cublasHandle_t handle, size_t M, size_t N) {
-  cudaError_t cudaStat;
   this->handle_ = handle;
   this->M_ = M;
   this->N_ = N;
   float *a_d_tmp;
-  cudaStat = cudaMalloc((void**)&a_d_tmp, M * N * sizeof (float));
+  CudaSafeCall(cudaMalloc((void**)&a_d_tmp, M * N * sizeof (float)));
   a_d_ = std::shared_ptr<float>(a_d_tmp, cudaFree);
-  if (cudaStat != cudaSuccess)
-    throw std::runtime_error("Device memory allocation failed");
 }
 
 CudaMatrix::CudaMatrix(const CudaMatrix& m) {
-  cudaError_t cudaStat;
   this->handle_ = m.handle_;
   this->M_ = m.M_;
   this->N_ = m.N_;
   float *a_d_tmp;
-  cudaStat = cudaMalloc((void**)&a_d_tmp, m.M_ * m.N_ * sizeof (float));
-  this->a_d_ = std::shared_ptr<float>(a_d_tmp, cudaFree);
-  if (cudaStat != cudaSuccess)
-    throw std::runtime_error("Device memory allocation failed");
 
-  cudaStat = cudaMemcpy(this->a_d_.get(), m.a_d_.get(), m.M_ * m.N_ * sizeof (float), cudaMemcpyDeviceToDevice);
-  if (cudaStat != cudaSuccess)
-    throw std::runtime_error("Device Memcpy failed");
+  CudaSafeCall(cudaMalloc((void**)&a_d_tmp, m.M_ * m.N_ * sizeof (float)));
+  this->a_d_ = std::shared_ptr<float>(a_d_tmp, cudaFree);
+
+  CudaSafeCall(cudaMemcpy(this->a_d_.get(), m.a_d_.get(), m.M_ * m.N_ * sizeof (float), cudaMemcpyDeviceToDevice));
 }
 
 // WORK
@@ -76,17 +68,9 @@ CudaMatrix& CudaMatrix::operator*(const CudaMatrix& m) const {
   float *b;
   float *c;
   
-  cudaError_t cudaStat = cudaMalloc((void**)&a, M_ * N_ * sizeof (float));
-  if (cudaStat != cudaSuccess)
-    throw std::runtime_error("Device memory allocation failed");
-
-  cudaStat = cudaMalloc((void**)&b, m.M_ * m.N_ * sizeof (float));
-  if (cudaStat != cudaSuccess)
-    throw std::runtime_error("Device memory allocation failed");
-
-  cudaStat = cudaMalloc((void**)&c, M_ * m.N_ * sizeof (float));
-  if (cudaStat != cudaSuccess)
-    throw std::runtime_error("Device memory allocation failed");
+  CudaSafeCall(cudaMalloc((void**)&a, M_ * N_ * sizeof (float)));
+  CudaSafeCall(cudaMalloc((void**)&b, m.M_ * m.N_ * sizeof (float)));
+  CudaSafeCall(cudaMalloc((void**)&c, M_ * m.N_ * sizeof (float)));
 
   dim3 DimGrid(std::ceil((M_ * N_) / 256.0), 1, 1);
   dim3 DimBlock(256, 1, 1);
@@ -130,24 +114,19 @@ CudaMatrix& CudaMatrix::operator*(const CudaMatrix& m) const {
 
 // WORK
 CudaMatrix& CudaMatrix::operator=(const CudaMatrix& m) {
-  cudaError_t cudaStat;
-
   CudaMatrix* n = new CudaMatrix(handle_, m.M_, m.N_);
 
-  cudaStat = cudaMemcpy(n->a_d_.get(), m.a_d_.get(), m.M_ * m.N_ * sizeof (float), cudaMemcpyDeviceToDevice);
-  if (cudaStat != cudaSuccess)
-    throw std::runtime_error("Device Memcpy failed");
+  CudaSafeCall(cudaMemcpy(n->a_d_.get(), m.a_d_.get(), m.M_ * m.N_ * sizeof (float), cudaMemcpyDeviceToDevice));
   
   this->M_ = m.M_;
   this->N_ = m.N_;
 
   float *a_d_tmp;
-  cudaStat = cudaMalloc((void**)&a_d_tmp, m.M_ * m.N_ * sizeof (float));
+  CudaSafeCall(cudaMalloc((void**)&a_d_tmp, m.M_ * m.N_ * sizeof (float)));
+
   this->a_d_ = std::shared_ptr<float>(a_d_tmp, cudaFree);
 
-  cudaStat = cudaMemcpy(this->a_d_.get(), m.a_d_.get(), m.M_ * m.N_ * sizeof (float), cudaMemcpyDeviceToDevice);
-  if (cudaStat != cudaSuccess)
-    throw std::runtime_error("Device Memcpy failed");
+  CudaSafeCall(cudaMemcpy(this->a_d_.get(), m.a_d_.get(), m.M_ * m.N_ * sizeof (float), cudaMemcpyDeviceToDevice));
   
   return *n;
 }
@@ -323,9 +302,7 @@ CudaMatrix& CudaMatrix::reshape(size_t M, size_t N) {
 // WORK
 void CudaMatrix::randomize() {
   curandState_t* states;
-  cudaError_t cudaStat = cudaMalloc((void**) &states, M_ * N_ * sizeof (curandState_t));
-  if (cudaStat != cudaSuccess)
-    throw std::runtime_error("Device memory allocation failed");
+  CudaSafeCall(cudaMalloc((void**) &states, M_ * N_ * sizeof (curandState_t)));
 
   init<<<M_ * N_, 1>>>(time(0), states);
 
@@ -374,11 +351,8 @@ float CudaMatrix::accu() const {
 CudaMatrix& CudaMatrix::addBias() {
   CudaMatrix& out = ones(this->M_, this->N_ + 1, handle_);
 
-  for (size_t i = 0; i < this->M_; ++i) {
-    cudaError_t cudaStat = cudaMemcpy(out.a_d_.get() + i * (this->N_ + 1), this->a_d_.get() + i * N_, N_ * sizeof (float), cudaMemcpyDeviceToDevice);
-    if (cudaStat != cudaSuccess)
-      throw std::runtime_error(cudaGetErrorString(cudaStat));
-  }
+  for (size_t i = 0; i < this->M_; ++i)
+    CudaSafeCall(cudaMemcpy(out.a_d_.get() + i * (this->N_ + 1), this->a_d_.get() + i * N_, N_ * sizeof (float), cudaMemcpyDeviceToDevice));
 
   sync_device();
 
