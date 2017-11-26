@@ -318,6 +318,7 @@ void CudaMatrix::print() const {
     std::cout << "\n";
   }
   std::cout << "\n";
+  free(tmp);
 }
 
 std::pair<size_t, size_t> CudaMatrix::shape() const {
