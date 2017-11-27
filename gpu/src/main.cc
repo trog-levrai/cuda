@@ -37,7 +37,13 @@ int main() {
     M.forward(X_).print();
     */
     std::string filename = "../data/train-images-idx3-ubyte";
-    Mnist::read_Mnist(filename, handle);
+    auto trainData = Mnist::read_Mnist(filename, handle);
+    std::string filenameLabels = "../data/train-labels-idx1-ubyte";
+    auto trainLabels = Mnist::read_Mnist_Label(filenameLabels, handle, 60000);
+    //std::string filenameTest = "../data/train-images-idx3-ubyte";
+    //auto testData = Mnist::read_Mnist(filenameTest, handle);
+    //std::string filenameLabelsTest = "../data/train-labels-idx1-ubyte";
+    //auto testLabels = Mnist::read_Mnist_Label(filenameLabelsTest, handle, 10000);
   }
 
   cublasDestroy(handle);
