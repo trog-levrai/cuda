@@ -17,7 +17,9 @@ int Mnist::ReverseInt (int i)
   return((int) ch1 << 24) + ((int)ch2 << 16) + ((int)ch3 << 8) + ch4;
 }
 
-void Mnist::read_Mnist(std::string filename, std::vector<mat> &vec){
+mat Mnist::read_Mnist(std::string filename, cublasHandle_t handle)
+{
+  auto vec = std::vector<std::vector<double>>();
   std::ifstream file (filename, std::ios::binary);
   if (file.is_open())
   {
@@ -35,39 +37,27 @@ void Mnist::read_Mnist(std::string filename, std::vector<mat> &vec){
     n_cols = ReverseInt(n_cols);
     for (int i = 0; i < number_of_images; ++i)
     {
-      mat tp(n_rows, n_cols);
+      std::vector<double> tp;
       for (int r = 0; r < n_rows; ++r)
       {
         for (int c = 0; c < n_cols; ++c)
         {
           unsigned char temp = 0;
           file.read((char*) &temp, sizeof (temp));
-          tp(r, c) = ((float) temp / 255.0);
+          tp.push_back((double)temp);
         }
       }
       vec.push_back(tp);
     }
   }
-}
+  std::cout << vec.size() << std::endl;
 
-void Mnist::read_Mnist_Label(std::string filename, arma::colvec &vec)
-{
-  std::ifstream file (filename, std::ios::binary);
-  if (file.is_open())
-  {
-    int magic_number = 0;
-    int number_of_images = 0;
-    int n_rows = 0;
-    int n_cols = 0;
-    file.read((char*) &magic_number, sizeof (magic_number));
-    magic_number = ReverseInt(magic_number);
-    file.read((char*) &number_of_images,sizeof (number_of_images));
-    number_of_images = ReverseInt(number_of_images);
-    for (int i = 0; i < number_of_images; ++i)
-    {
-      unsigned char temp = 0;
-      file.read((char*) &temp, sizeof (temp));
-      vec(i)= (float)temp;
-    }
+  float* data  = new float[MNIST_IMG_SIZE * vec.size()];
+  for (size_t i = 0; i < vec.size(); ++i) {
+    for (size_t j = 0; j < MNIST_IMG_SIZE; ++j)
+      data[i * MNIST_IMG_SIZE + j] = (float)vec[i][j];
   }
+  auto ans = mat(handle, vec.size(), MNIST_IMG_SIZE, data);
+  delete data;
+  return ans.t();
 }

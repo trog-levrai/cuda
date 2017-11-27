@@ -2,6 +2,7 @@
 
 # include "cuda_matrix.cuh"
 # include "model.hh"
+# include "mnist.hh"
 
 int main() {
   cudaError_t cudaStat;
@@ -19,6 +20,7 @@ int main() {
   float Y[] = {1., -1., -1., 1.};
 
   {
+    /*
     mat y(handle, 1, 4, Y);
     mat X_(handle, 2, 4, X);
 
@@ -33,6 +35,9 @@ int main() {
     M.train(X_, y, 10000, 0.1);
 
     M.forward(X_).print();
+    */
+    std::string filename = "../data/train-images-idx3-ubyte";
+    Mnist::read_Mnist(filename, handle);
   }
 
   cublasDestroy(handle);
