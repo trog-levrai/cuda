@@ -64,10 +64,10 @@ const mat Model::forward(const mat& X) {
     if (this->type[i] == "dense") {
       X_c = X_c.addBias();
 
-      //this->o_buff = X_c.mult_buff(W_, o_buff);
-      //X_c = this->activate(o_buff, this->activate_vec[i]);
-      mat o = X_c * W_;
-      X_c = this->activate(o, this->activate_vec[i]);
+      X_c.mult_buff(W_, o_buff);
+      X_c = this->activate(o_buff, this->activate_vec[i]);
+//    mat o = X_c * W_;
+//    X_c = this->activate(o, this->activate_vec[i]);
     }
     ++i;
   }
@@ -84,17 +84,15 @@ mat Model::forward_keep(const mat& X) {
   size_t i = 0;
   for (auto& W_: this->W) {
     X_c = X_c.addBias();
-    this->C.push_back(mat(X_c));
+    this->C.push_back(X_c);
 
-    /*
-    this->o_buff = X_c.mult_buff(W_, o_buff);
+    X_c.mult_buff(W_, o_buff);
     this->H.push_back(mat(o_buff));
     X_c = this->activate(o_buff, this->activate_vec[i]);
-    */
 
-    mat o = X_c * W_;
-    this->H.push_back(mat(o));
-    X_c = this->activate(o, this->activate_vec[i]);
+//  mat o = X_c * W_;
+//  this->H.push_back(mat(o));
+//  X_c = this->activate(o, this->activate_vec[i]);
 
     ++i;
   }
