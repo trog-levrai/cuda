@@ -7,12 +7,6 @@
 void Model::init_W(size_t m, size_t n) {
   mat M(handle_, m, n);
   M.randomize();
-  M = M - 0.5;
-  float r = 4.0 * sqrt(6.0 / (m + n));
-  M = M * r;
-
-  M = M * 0;
-
   this->W.emplace_back(M);
 }
 
@@ -111,10 +105,9 @@ std::vector<mat> Model::get_err(const mat truth) {
     if (this->type[i] == "dense") {
       //TODO add an else clause if another layer than dense is supported
       mat aux = CudaMatrix(handle_, 0, 0);
-      if (this->type[i + 1] == "dense") {
-        mat tmp = this->W[i + 1] * err_vec.back().t();
-        aux = tmp.rows(0, tmp.N_ - 2);
-      }
+        
+      mat tmp = this->W[i + 1] * err_vec.back().t();
+      aux = tmp.rows(0, tmp.N_ - 1);
 
       mat cp2(H[i]);
       mat err = aux.t() % this->d_activate(cp2, this->activate_vec[i]);

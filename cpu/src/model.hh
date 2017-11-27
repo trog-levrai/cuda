@@ -8,6 +8,7 @@
 class Model {
 
   public:
+    Model();
     void add(size_t output_units);
     void add(size_t output_units, size_t input_units);
     arma::Mat<float>& predict(arma::Mat<float>& X);

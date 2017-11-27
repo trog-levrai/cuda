@@ -119,6 +119,7 @@ CudaMatrix CudaMatrix::operator*(float x) const {
 // WORK
 CudaMatrix CudaMatrix::operator%(const CudaMatrix& m) const {
   if (this->shape() != m.shape()) {
+    std::cout << "% failed\n";
     this->print_shape("this\t");
     m.print_shape("m\t");
     exit(-1);
@@ -137,6 +138,7 @@ CudaMatrix CudaMatrix::operator%(const CudaMatrix& m) const {
 // WORK
 CudaMatrix CudaMatrix::operator+(const CudaMatrix& m) const {
   if (this->shape() != m.shape()) {
+    std::cout << "+ failed\n";
     this->print_shape("this\t");
     m.print_shape("m\t");
   }

@@ -4,12 +4,13 @@
 # include <stdexcept>
 # include <assert.h>
 
+Model::Model() {
+  arma::arma_rng::set_seed_random();
+}
+
 void Model::init_W(size_t m, size_t n) {
   arma::Mat<float> M;
   M.randu(m, n);
-  M -= 0.5;
-  float r = 4.0 * sqrt(6.0 / (m + n));
-  M *= r;
   this->W.emplace_back(M);
 }
 
@@ -88,8 +89,9 @@ std::vector<arma::Mat<float>> Model::get_err(const arma::Mat<float> truth) {
 
   for (int i = W.size() - 2; i >= 0; --i) {
     arma::Mat<float> tmp = this->W[i + 1] * err_vec.back().t();
-    arma::Mat<float> aux = tmp.rows(0, tmp.n_rows - 2); //TOOO
 
+    arma::Mat<float> aux = tmp.rows(0, tmp.n_rows - 2); //TOOO
+    
     arma::Mat<float> cp2(H[i]);
     arma::Mat<float> err = aux.t() % dsigmoid_mat_(cp2);
 
@@ -117,6 +119,11 @@ float Model::loss(const arma::Mat<float>& X, const arma::Mat<float>& y) {
 }
 
 void Model::train(arma::Mat<float>& X, arma::Mat<float>& y, size_t nb_epoch, float lr) {
+  const size_t batch_size = 4;
+
+  if (this->W.empty())
+    throw std::runtime_error("An model has no input layer");
+
   for (size_t i = 0; i < nb_epoch; i++)
   {
     auto shuffle = std::vector<size_t>();
@@ -127,10 +134,19 @@ void Model::train(arma::Mat<float>& X, arma::Mat<float>& y, size_t nb_epoch, flo
 
     std::cout << "============ EPOCH " << i << "\n";
 
-    for (size_t j = 0; j < shuffle.size(); ++j)
-    {
-      this->forward_keep(X.row(shuffle[j]));
-      this->back_propagate(lr, y.row(shuffle[j]));
+    for (size_t j = 0; j * batch_size < shuffle.size(); ++j) {
+      arma::uvec indices;
+      size_t b = j * batch_size;
+      for (size_t it = b; it < b + batch_size && it < shuffle.size(); ++it)
+      {
+        arma::uvec av(1);
+        av.at(0) = it;
+        indices.insert_rows(indices.n_rows, av.row(0));
+      }
+
+      this->forward_keep(X.rows(indices));
+      this->back_propagate(lr, y.rows(indices));
+
     }
 
     std::cout << "Train loss: " << this->loss(X, y) << std::endl;

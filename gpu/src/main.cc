@@ -16,7 +16,7 @@ int main() {
 
   float X[] = {0., 0., 1., 1.,\
                0., 1., 0., 1.};
-  float Y[] = {-1., -1., -1., 1.};
+  float Y[] = {1., -1., -1., 1.};
 
   {
     mat y(handle, 1, 4, Y);
@@ -26,7 +26,8 @@ int main() {
     y = y.t();
 
     Model M(handle);
-    M.add(1, 2, "relu");
+    M.add(3, 2, "relu");
+    M.add(1, "relu");
     M.compile();
 
     M.train(X_, y, 10000, 0.1);
