@@ -1,4 +1,5 @@
 # include <iostream>
+# include <fstream>
 
 # include "cuda_matrix.cuh"
 # include "model.hh"
@@ -51,7 +52,12 @@ int main() {
 
     M.compile();
 
-    M.train(trainData, trainLabels, 100, 0.1);
+    auto loss = M.train(trainData, trainLabels, 2, 0.1);
+    std::ofstream myfile;
+    myfile.open("loss_float32.csv");
+    for (float l : loss)
+        myfile << l << std::endl;
+    myfile.close();
   }
 
   cublasDestroy(handle);

@@ -34,8 +34,8 @@ class Model {
 
     void compile();
 
-    void train(const mat& X, const mat& y, size_t nb_epoch, float lr);
-    void train(const mat& X, const mat& y, size_t nb_epoch);
+    std::vector<float> train(const mat& X, const mat& y, size_t nb_epoch, float lr);
+    std::vector<float> train(const mat& X, const mat& y, size_t nb_epoch);
     const mat forward(const mat& X);
     const float loss(const mat& X, const mat& y);
 

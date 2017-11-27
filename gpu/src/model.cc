@@ -3,6 +3,7 @@
 # include <cmath>
 # include <stdexcept>
 # include <assert.h>
+# include <vector>
 
 void Model::init_W(size_t m, size_t n) {
   mat M(handle_, m, n);
@@ -144,8 +145,9 @@ const float Model::loss(const mat& X, const mat& y) {
   return out.accu() / y.M_;
 }
 
-void Model::train(const mat& X, const mat& y, size_t nb_epoch, float lr) {
+std::vector<float> Model::train(const mat& X, const mat& y, size_t nb_epoch, float lr) {
   const size_t batch_size = 8;
+  std::vector<float> out(nb_epoch);
 
   if (this->W.empty())
     throw std::runtime_error("An model has no input layer");
@@ -170,13 +172,17 @@ void Model::train(const mat& X, const mat& y, size_t nb_epoch, float lr) {
       this->back_propagate(lr, y.rows(indices));
     }
 
-    std::cout << "Train loss: " << this->loss(X, y) << std::endl;
+    float loss = this->loss(X, y);
+    out.push_back(loss);
+    std::cout << "Train loss: " << loss << std::endl;
     std::cout << std::endl;
   }
+
+  return out;
 }
 
-void Model::train(const mat& X, const mat& y, size_t nb_epoch) {
-  this->train(X, y, nb_epoch, 0.1);
+std::vector<float> Model::train(const mat& X, const mat& y, size_t nb_epoch) {
+  return this->train(X, y, nb_epoch, 0.1);
 }
 
 void Model::compile() {
