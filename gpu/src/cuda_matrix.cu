@@ -276,7 +276,7 @@ CudaMatrix CudaMatrix::relu() {
   matTanh<<<DimGrid,DimBlock>>>(a_d_.get(), this->M_ * this->N_);
 
   sync_device();
-
+  
   return *this;
 }
 
