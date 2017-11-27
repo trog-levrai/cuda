@@ -58,7 +58,7 @@ mat Mnist::read_Mnist(std::string filename, cublasHandle_t handle)
   }
   auto ans = mat(handle, vec.size(), MNIST_IMG_SIZE, data);
   delete data;
-  return ans.t();
+  return ans;
 }
 
 mat Mnist::read_Mnist_Label(std::string filename, cublasHandle_t handle, size_t nb)
@@ -87,5 +87,5 @@ mat Mnist::read_Mnist_Label(std::string filename, cublasHandle_t handle, size_t 
     data[NB_CLASS *  i + (int)vec[i]] = 1.;
   auto ans =  mat(handle, vec.size(), NB_CLASS, data);
   delete data;
-  return ans.t();
+  return ans;
 }

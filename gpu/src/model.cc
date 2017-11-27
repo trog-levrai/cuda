@@ -7,6 +7,8 @@
 void Model::init_W(size_t m, size_t n) {
   mat M(handle_, m, n);
   M.randomize();
+  M = M - .5;
+  M = M * 2. * sqrt(6. / (m + n));
   this->W.emplace_back(M);
 }
 
@@ -59,7 +61,7 @@ const mat Model::forward(const mat& X) {
 
       //X_c.mult_buff(W_, o_buff);
       //X_c = this->activate(o_buff, this->activate_vec[i]);
-      
+
       mat o = X_c * W_;
       X_c = this->activate(o, this->activate_vec[i]);
     }
@@ -95,7 +97,7 @@ mat Model::forward_keep(const mat& X) {
   return X_c;
 }
 
-std::vector<mat> Model::get_err(const mat truth) {
+std::vector<mat> Model::get_err(const mat& truth) {
   mat cp(H.back());
   mat err0 = (truth - C.back()) % this->d_activate(cp, this->activate_vec.back());
 
@@ -106,7 +108,7 @@ std::vector<mat> Model::get_err(const mat truth) {
     if (this->type[i] == "dense") {
       //TODO add an else clause if another layer than dense is supported
       mat tmp = this->W[i + 1] * err_vec.back().t();
-      mat err = tmp.rows(0, tmp.N_ - 1).t();
+      mat err = tmp.rows(0, tmp.M_ - 1).t();
 
       //this->W[i + 1].mult_buff(err_vec.back().t(), this->tmp);
       //mat err = this->tmp.rows(0, this->tmp.N_ - 1).t();

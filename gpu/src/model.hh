@@ -50,7 +50,7 @@ class Model {
 
     mat forward_keep(const mat& X);
 
-    std::vector<mat> get_err(const mat);
+    std::vector<mat> get_err(const mat&);
     void back_propagate(float, const mat);
 
     std::vector<std::string> activate_vec;
