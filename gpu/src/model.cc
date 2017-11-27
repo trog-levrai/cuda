@@ -51,7 +51,6 @@ void Model::add(size_t output_units, std::string activ) {
 }
 
 const mat Model::forward(const mat& X) {
-  // FIXME
   mat X_c(X);
   size_t i = 0;
   for (auto& W_ : this->W) {
@@ -60,8 +59,6 @@ const mat Model::forward(const mat& X) {
 
       X_c.mult_buff(W_, o_buff);
       X_c = this->activate(o_buff, this->activate_vec[i]);
-//    mat o = X_c * W_;
-//    X_c = this->activate(o, this->activate_vec[i]);
     }
     ++i;
   }
@@ -73,7 +70,6 @@ mat Model::forward_keep(const mat& X) {
   this->H.clear();
   this->C.clear();
 
-  // FIXME
   mat X_c(X);
   size_t i = 0;
   for (auto& W_: this->W) {
@@ -81,12 +77,9 @@ mat Model::forward_keep(const mat& X) {
     this->C.push_back(X_c);
 
     X_c.mult_buff(W_, o_buff);
-    this->H.push_back(mat(o_buff));
-    X_c = this->activate(o_buff, this->activate_vec[i]);
 
-//  mat o = X_c * W_;
-//  this->H.push_back(mat(o));
-//  X_c = this->activate(o, this->activate_vec[i]);
+    this->H.push_back(o_buff);
+    X_c = this->activate(o_buff, this->activate_vec[i]);
 
     ++i;
   }
@@ -104,13 +97,14 @@ std::vector<mat> Model::get_err(const mat truth) {
   for (int i = W.size() - 2; i >= 0; --i) {
     if (this->type[i] == "dense") {
       //TODO add an else clause if another layer than dense is supported
-      mat aux = CudaMatrix(handle_, 0, 0);
-        
       mat tmp = this->W[i + 1] * err_vec.back().t();
-      aux = tmp.rows(0, tmp.N_ - 1);
+      mat err = tmp.rows(0, tmp.N_ - 1).t();
+
+      //this->W[i + 1].mult_buff(err_vec.back().t(), this->tmp);
+      //mat err = this->tmp.rows(0, this->tmp.N_ - 1).t();
 
       mat cp2(H[i]);
-      mat err = aux.t() % this->d_activate(cp2, this->activate_vec[i]);
+      err %= this->d_activate(cp2, this->activate_vec[i]);
 
       err_vec.push_back(err);
     }
@@ -127,15 +121,15 @@ void Model::back_propagate(float lambda, const mat truth) {
     if (this->type[i] != "pool")
     {
       mat tmp = err[i].t().dot(this->C[i], lambda);
-      this->W[i] = this->W[i] + tmp.t();
+      this->W[i] += tmp.t();
     }
   }
 }
 
 const float Model::loss(const mat& X, const mat& y) {
   mat out = this->forward(X);
-  out = out - y;
-  out = out % out;
+  out -= y;
+  out %= out;
   return out.accu() / y.M_;
 }
 
@@ -175,6 +169,7 @@ void Model::train(const mat& X, const mat& y, size_t nb_epoch) {
 }
 
 void Model::compile() {
+  // ALLOCATE DO PRODUCT
   size_t max_n = this->W[0].N_;
   size_t max_m = this->W[0].M_;
 
@@ -186,4 +181,8 @@ void Model::compile() {
   }
 
   this->o_buff = mat(this->handle_, max_m + 1, max_n + 1);
+
+  // ALLOCATE TMP
+  
+  this->tmp = mat(this->handle_, max_m + 1, max_n + 1);
 }

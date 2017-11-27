@@ -22,7 +22,7 @@ class Model {
 
   public:
     Model(cublasHandle_t handle)
-    :handle_(handle), o_buff(handle_, 1, 1){}
+    :handle_(handle), o_buff(handle_, 1, 1), tmp(handle_, 1, 1) {}
 
     void add(size_t output_units);
     void add(size_t output_units, size_t input_units);
@@ -41,6 +41,7 @@ class Model {
 
   private:
     mat o_buff;
+    mat tmp;
 
     void init_W(size_t input, size_t output);
 

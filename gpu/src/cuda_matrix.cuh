@@ -23,7 +23,7 @@ class CudaMatrix {
 
     //Copy constructor
     CudaMatrix(const CudaMatrix&);
-
+    
     //Dot product of matrix
     CudaMatrix operator*(const CudaMatrix&) const;
 
@@ -36,14 +36,23 @@ class CudaMatrix {
     //Assignement operator
     CudaMatrix operator=(const CudaMatrix&);
 
+    //Assignment without realloc
+    CudaMatrix operator+=(const CudaMatrix& m);
+
     //Multiplication with a scalar
     CudaMatrix operator*(float) const;
 
     //Cell-wise multiplication
     CudaMatrix operator%(const CudaMatrix&) const;
 
+    //Cell-wise mult
+    CudaMatrix operator%=(const CudaMatrix& m);
+
     //Cell-wise substraction
     CudaMatrix operator-(const CudaMatrix&) const;
+
+    //Cell-wise sub in place
+    CudaMatrix operator-=(const CudaMatrix& m);
 
     //Cell-wise addition
     CudaMatrix operator+(const CudaMatrix&) const;
@@ -53,6 +62,9 @@ class CudaMatrix {
 
     //Addition of a scalar
     CudaMatrix operator+(float) const;
+    
+    //Addition of a scalar inplace
+    CudaMatrix operator+=(float);
 
     //Randomly fills the matrix
     void randomize();

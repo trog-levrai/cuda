@@ -14,7 +14,7 @@ void sync_device() {
 CudaMatrix ones(size_t M, size_t N, cublasHandle_t handle) {
   auto out = CudaMatrix(handle, M, N);
   cudaMemset((void**)out.getMat().get(), 0, M * N * sizeof(float));
-  out = out + 1.;
+  out += 1.;
 
   return out;
 }
@@ -136,6 +136,24 @@ CudaMatrix CudaMatrix::operator%(const CudaMatrix& m) const {
 }
 
 // WORK
+CudaMatrix CudaMatrix::operator%=(const CudaMatrix& m) {
+  if (this->shape() != m.shape()) {
+    std::cout << "% failed\n";
+    this->print_shape("this\t");
+    m.print_shape("m\t");
+    exit(-1);
+  }
+
+  dim3 DimGrid(std::ceil((M_ * N_) / 256.0), 1, 1);
+  dim3 DimBlock(256, 1, 1);
+  vecMulKernel<<<DimGrid,DimBlock>>>(a_d_.get(), m.a_d_.get(), a_d_.get(), M_ * N_);
+
+  sync_device();
+
+  return *this;
+}
+
+// WORK
 CudaMatrix CudaMatrix::operator+(const CudaMatrix& m) const {
   if (this->shape() != m.shape()) {
     std::cout << "+ failed\n";
@@ -155,6 +173,23 @@ CudaMatrix CudaMatrix::operator+(const CudaMatrix& m) const {
 }
 
 // WORK
+CudaMatrix CudaMatrix::operator+=(const CudaMatrix& m) {
+  if (this->shape() != m.shape()) {
+    std::cout << "+ failed\n";
+    this->print_shape("this\t");
+    m.print_shape("m\t");
+  }
+
+  dim3 DimGrid(std::ceil((M_ * N_) / 256.0), 1, 1);
+  dim3 DimBlock(256, 1, 1);
+  vecAddKernel<<<DimGrid,DimBlock>>>(a_d_.get(), m.a_d_.get(), a_d_.get(), M_ * N_);
+
+  sync_device();
+
+  return *this;
+}
+
+// WORK
 CudaMatrix CudaMatrix::operator-(const CudaMatrix& m) const {
   dim3 DimGrid(std::ceil((N_ * M_) / 256.0), 1, 1);
   dim3 DimBlock(256, 1, 1);
@@ -163,6 +198,16 @@ CudaMatrix CudaMatrix::operator-(const CudaMatrix& m) const {
   vecSubKernel<<<DimGrid,DimBlock>>>(a_d_.get(), m.a_d_.get(), c.a_d_.get(), M_ * N_);
   sync_device();
   return c;
+}
+
+// WORK
+CudaMatrix CudaMatrix::operator-=(const CudaMatrix& m) {
+  dim3 DimGrid(std::ceil((N_ * M_) / 256.0), 1, 1);
+  dim3 DimBlock(256, 1, 1);
+
+  vecSubKernel<<<DimGrid,DimBlock>>>(a_d_.get(), m.a_d_.get(), a_d_.get(), M_ * N_);
+  sync_device();
+  return *this;
 }
 
 // WORK
@@ -176,6 +221,16 @@ CudaMatrix CudaMatrix::operator+(float m) const {
   sync_device();
 
   return c;
+}
+
+CudaMatrix CudaMatrix::operator+=(float m) {
+  dim3 DimGrid(std::ceil((M_ * N_) / 256.0), 1, 1);
+  dim3 DimBlock(256, 1, 1);
+  scalarAddKernel<<<DimGrid,DimBlock>>>(a_d_.get(), m, a_d_.get(), M_ * N_);
+
+  sync_device();
+
+  return *this;
 }
 
 // WORK
@@ -197,12 +252,10 @@ CudaMatrix CudaMatrix::t() const {
 
   float alpha = 1.;
   float beta = 0.;
-  cublasStatus_t stat = cublasSgeam(handle_, CUBLAS_OP_T, CUBLAS_OP_T, M_, N_, &alpha, this->a_d_.get(), N_, &beta, this->a_d_.get(), N_, c.a_d_.get(), M_);
+
+  CublasSafeCall(cublasSgeam(handle_, CUBLAS_OP_T, CUBLAS_OP_T, M_, N_, &alpha, this->a_d_.get(), N_, &beta, this->a_d_.get(), N_, c.a_d_.get(), M_));
 
   sync_device();
-
-  if (stat != CUBLAS_STATUS_SUCCESS)
-    throw std::runtime_error("Matrix transposition failed");
   return c;
 }
 
