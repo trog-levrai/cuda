@@ -145,7 +145,7 @@ const float Model::loss(const mat& X, const mat& y) {
 }
 
 void Model::train(const mat& X, const mat& y, size_t nb_epoch, float lr) {
-  const size_t batch_size = 4;
+  const size_t batch_size = 8;
 
   if (this->W.empty())
     throw std::runtime_error("An model has no input layer");

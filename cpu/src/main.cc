@@ -28,7 +28,7 @@ int main() {
   M.add(40, 784);
   M.add(10);
 
-  M.train(X, y, 100, 0.01);
+  M.train(X, y, 5, 0.01);
   mat out = M.forward(X);
 
   mat t(train_data.size(), 1);
