@@ -89,12 +89,12 @@ mat Model::forward_keep(const mat& X) {
     //this->H.push_back(o_buff);
     //X_c = this->activate(o_buff, this->activate_vec[i]);
     
-    this->H.push_back(mat(o));
+    this->H.push_back(o);
     X_c = this->activate(o, this->activate_vec[i]);
     
     ++i;
   }
-  this->C.push_back(mat(X_c));
+  this->C.push_back(X_c);
   return X_c;
 }
 
@@ -145,7 +145,7 @@ const float Model::loss(const mat& X, const mat& y) {
 }
 
 void Model::train(const mat& X, const mat& y, size_t nb_epoch, float lr) {
-  const size_t batch_size = 16;
+  const size_t batch_size = 4;
 
   if (this->W.empty())
     throw std::runtime_error("An model has no input layer");
@@ -156,7 +156,7 @@ void Model::train(const mat& X, const mat& y, size_t nb_epoch, float lr) {
     for (size_t i = 0; i < X.M_; ++i) {
       shuffle.push_back(i);
     }
-    std::random_shuffle(shuffle.begin(), shuffle.end());
+    //std::random_shuffle(shuffle.begin(), shuffle.end());
 
     std::cout << "============ EPOCH " << i << "\n";
 
