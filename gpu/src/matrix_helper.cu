@@ -51,8 +51,7 @@ __global__ void matRelu(float* a, int n) {
 __global__ void matTanh(float* a, int n) {
   int i = threadIdx.x + blockDim.x * blockIdx.x;
   if (i < n) {
-    float ex = expf(2. * a[i]);
-    a[i] = (ex - 1) / (ex + 1);
+    a[i] = tanhf(a[i]);
   }
 }
 
@@ -64,8 +63,7 @@ __global__ void matDRelu(float* a, int n) {
 __global__ void matDTanh(float* a, int n) {
   int i = threadIdx.x + blockDim.x * blockIdx.x;
   if (i < n) {
-    float ex = expf(2. * a[i]);
-    float x = (ex - 1) / (ex + 1);
+    float x = tanhf(a[i]);
     a[i] = 1. - x * x;
   }
 }
