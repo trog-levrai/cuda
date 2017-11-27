@@ -11,6 +11,12 @@ Model::Model() {
 void Model::init_W(size_t m, size_t n) {
   arma::Mat<float> M;
   M.randu(m, n);
+
+  M -= 0.5;
+  M *= 2;
+
+  M *= sqrt(6. / (m + n));
+
   this->W.emplace_back(M);
 }
 

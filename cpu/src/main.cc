@@ -5,7 +5,6 @@
 #include "mnist.hh"
 
 int main() {
-  /*
   std::string filename = "../data/train-images-idx3-ubyte";
 
   std::vector<mat> train_data;
@@ -26,8 +25,8 @@ int main() {
     y(i, train_label(i)) = 1.0;
 
   Model M;
-  M.add(40, 784, "relu");
-  M.add(10, "relu");
+  M.add(40, 784);
+  M.add(10);
 
   M.train(X, y, 100, 0.01);
   mat out = M.forward(X);
@@ -50,8 +49,8 @@ int main() {
     acc = t(i, 0) == train_label(i) ? acc + 1 : acc;
 
   std::cout << "Accuracy= " << acc / train_data.size() << "\n";
-  */
-
+  
+  /*
   Model M;
   M.add(3, 2);
   M.add(1);
@@ -75,4 +74,5 @@ int main() {
   //std::cout << y << std::endl;
 
   return 0;
+  */
 }
