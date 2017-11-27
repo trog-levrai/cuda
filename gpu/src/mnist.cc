@@ -44,7 +44,7 @@ mat Mnist::read_Mnist(std::string filename, cublasHandle_t handle)
         {
           unsigned char temp = 0;
           file.read((char*) &temp, sizeof (temp));
-          tp.push_back((double)temp / 255.0);
+          tp.push_back((double)temp);
         }
       }
       vec.push_back(tp);
