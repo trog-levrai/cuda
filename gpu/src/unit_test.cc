@@ -16,15 +16,15 @@ int main() {
 
   float X[] = {1., 2., 3.,\
                4., 5., 6.,\
-               7., 8., 9.};//,\
-              //10., 11., 12.,\
-              //13., 14., 15.};
+               7., 8., 9.,\
+              10., 11., 12.,\
+              13., 14., 15.};
   float Y[] = {3.,\
                6.,\
                9.,\
               12.,\
               15.};
-  mat X_(handle, 3, 3, X);
+  mat X_(handle, 5, 3, X);
   mat Y_(handle, 5, 1, Y);
   //Transpose
   //mat y = X_.t();
@@ -39,7 +39,7 @@ int main() {
   //mat y = X_ * 2.;
 
   //Dot product
-  mat y = X_ * X_.t();
+  //mat y = X_ * X_.t();
 
   //Element-wise multiplication
   //mat y = X_ % X_;
@@ -66,7 +66,7 @@ int main() {
   //std::cout << X_.accu() << std::endl;
 
   //Rows interval
-  //mat y = X_.rows(1, 3);
+  //mat y = X_.rows(0, 3);
 
   //Rows indexes
   //auto aux = std::vector<size_t>();
@@ -77,10 +77,10 @@ int main() {
 
   //Add Bias
   //mat y = X_;
-  //y.addBias();
+  //y = y.addBias();
 
   //Relu
-  //mat y = (X_ - 3).relu();
+  mat y = (X_ + 30).relu();
 
   //DRelu
   //mat y = (X_ - 3).d_relu();
