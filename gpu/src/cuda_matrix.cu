@@ -8,7 +8,7 @@
 void sync_device() {
   cudaError_t stat_ = cudaDeviceSynchronize();
   if (stat_ != cudaSuccess)
-    throw std::runtime_error("Device synchrnization failed");
+    throw std::runtime_error("Device synchronization failed");
 }
 
 CudaMatrix ones(size_t M, size_t N, cublasHandle_t handle) {

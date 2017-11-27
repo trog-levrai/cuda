@@ -44,6 +44,14 @@ int main() {
     //auto testData = Mnist::read_Mnist(filenameTest, handle);
     //std::string filenameLabelsTest = "../data/train-labels-idx1-ubyte";
     //auto testLabels = Mnist::read_Mnist_Label(filenameLabelsTest, handle, 10000);
+    
+    Model M(handle);
+    M.add(40, 784);
+    M.add(10);
+
+    M.compile();
+
+    M.train(trainData, trainLabels, 100, 0.1);
   }
 
   cublasDestroy(handle);
