@@ -16,14 +16,14 @@ class CudaMatrix {
     ~CudaMatrix();
 
     //Constructor that copies host matrix to device
-    CudaMatrix(cublasHandle_t handle, size_t M, size_t N, const float* a_h);
+    CudaMatrix(cublasHandle_t handle, size_t M, size_t N, const float* a_h, bool);
 
     //Constructor that creates device matrix
-    CudaMatrix(cublasHandle_t handle, size_t M, size_t N);
+    CudaMatrix(cublasHandle_t handle, size_t M, size_t N, bool);
 
     //Copy constructor
     CudaMatrix(const CudaMatrix&);
-    
+
     //Dot product of matrix
     CudaMatrix operator*(const CudaMatrix&) const;
 
@@ -62,7 +62,7 @@ class CudaMatrix {
 
     //Addition of a scalar
     CudaMatrix operator+(float) const;
-    
+
     //Addition of a scalar inplace
     CudaMatrix operator+=(float);
 
@@ -91,7 +91,7 @@ class CudaMatrix {
     void setMat(float* arr) { a_d_ = std::shared_ptr<float>(arr, cudaFree); };
 
     //get mat
-    std::shared_ptr<float> getMat() const { return a_d_; };
+    std::shared_ptr<float> getMat() const { return f_d_; };
 
     //Sums up all the elements of the matrix
     float accu() const;
@@ -111,9 +111,17 @@ class CudaMatrix {
     //Prints the shape of th matrix
     void print_shape(std::string) const;
 
+    //Return the float16 version of the matrix
+    CudaMatrix getHalf() const;
+
+    //Allocates memory for this matrix
+    void alloc();
+
   private:
-    std::shared_ptr<float> a_d_ = NULL;
+    std::shared_ptr<float> f_d_ = NULL;
+    std::shared_ptr<half> a_d_ = NULL;
     cublasHandle_t handle_;
+    bool half_;
   public:
     size_t M_;
     size_t N_;

@@ -13,47 +13,67 @@ void sync_device() {
 
 CudaMatrix ones(size_t M, size_t N, cublasHandle_t handle) {
   auto out = CudaMatrix(handle, M, N);
-  cudaMemset((void**)out.getMat().get(), 0, M * N * sizeof(float));
+  cudaMemset((void**)out.getMat().get(), 0, M * N * sizeof (float));
   out += 1.;
 
   return out;
 }
 
-CudaMatrix::~CudaMatrix() {
+CudaMatrix::~CudaMatrix() { }
+
+void CudaMatrix::alloc() {
+  if (half_) {
+    half *a_d_tmp;
+    CudaSafeCall(cudaMalloc((void**)&a_d_tmp, M_ * N_ * sizeof (half)));
+    a_d_ = std::shared_ptr<half>(a_d_tmp, cudaFree);
+  } else {
+    float *a_d_tmp;
+    CudaSafeCall(cudaMalloc((void**)&a_d_tmp, M_ * N_ * sizeof (float)));
+    f_d_ = std::shared_ptr<float>(a_d_tmp, cudaFree);
+  }
 }
 
-CudaMatrix::CudaMatrix(cublasHandle_t handle, size_t M, size_t N, const float* a_h) {
+CudaMatrix::CudaMatrix(cublasHandle_t handle, size_t M, size_t N, const float* a_h, bool half = false) {
   this->handle_ = handle;
   this->M_ = M;
   this->N_ = N;
-  float *a_d_tmp;
+  this->half_ = half;
+  this->alloc();
 
-  CudaSafeCall(cudaMalloc ((void**)&a_d_tmp, M * N * sizeof (float)));
+  if (half_) {
+    float *a_d_tmp;
+    CudaSafeCall(cudaMalloc((void**)&a_d_tmp, M_ * N_ * sizeof (float)));
+    CublasSafeCall(cublasSetMatrix(M, N, sizeof (float), a_h, M, a_d_tmp, M));
 
-  this->a_d_ = std::shared_ptr<float>(a_d_tmp, cudaFree);
-
-  CublasSafeCall(cublasSetMatrix(M, N, sizeof (float), a_h, M, a_d_.get(), M));
+    dim3 DimGrid(std::ceil((M_ * N_) / 256.0), 1, 1);
+    dim3 DimBlock(256, 1, 1);
+    f2h<<<DimGrid,DimBlock>>>(a_d_tmp, a_d_.get(), M_ * N_);
+    CudaSafeCall(cudaFree(a_d_tmp));
+    sync_device();
+  }
+  else
+    CublasSafeCall(cublasSetMatrix(M, N, sizeof (float), a_h, M, a_d_.get(), M));
 }
 
-CudaMatrix::CudaMatrix(cublasHandle_t handle, size_t M, size_t N) {
+CudaMatrix::CudaMatrix(cublasHandle_t handle, size_t M, size_t N, bool half = false) {
   this->handle_ = handle;
   this->M_ = M;
   this->N_ = N;
-  float *a_d_tmp;
-  CudaSafeCall(cudaMalloc((void**)&a_d_tmp, M * N * sizeof (float)));
-  a_d_ = std::shared_ptr<float>(a_d_tmp, cudaFree);
+  this->half_ = half;
+  this->alloc();
 }
 
 CudaMatrix::CudaMatrix(const CudaMatrix& m) {
   this->handle_ = m.handle_;
   this->M_ = m.M_;
   this->N_ = m.N_;
-  float *a_d_tmp;
+  this->half_ = m.half_;
+  this->alloc();
 
-  CudaSafeCall(cudaMalloc((void**)&a_d_tmp, m.M_ * m.N_ * sizeof (float)));
-  this->a_d_ = std::shared_ptr<float>(a_d_tmp, cudaFree);
-
-  CudaSafeCall(cudaMemcpy(this->a_d_.get(), m.a_d_.get(), m.M_ * m.N_ * sizeof (float), cudaMemcpyDeviceToDevice));
+  if (half_)
+    CudaSafeCall(cudaMemcpy(this->a_d_.get(), m.a_d_.get(), m.M_ * m.N_ * sizeof (half), cudaMemcpyDeviceToDevice));
+  else
+    CudaSafeCall(cudaMemcpy(this->f_d_.get(), m.f_d_.get(), m.M_ * m.N_ * sizeof (float), cudaMemcpyDeviceToDevice));
 }
 
 // WORK
@@ -62,7 +82,7 @@ CudaMatrix CudaMatrix::operator*(const CudaMatrix& m) const {
   float beta = 0.;
   auto c = CudaMatrix(handle_, M_, m.N_);
 
-  CublasSafeCall(cublasSgemm(handle_, CUBLAS_OP_N, CUBLAS_OP_N, m.N_, M_, N_, &alpha, m.a_d_.get(), m.N_, a_d_.get(), N_, &beta, c.a_d_.get(), m.N_));
+  CublasSafeCall(cublasHgemm(handle_, CUBLAS_OP_N, CUBLAS_OP_N, m.N_, M_, N_, &alpha, m.a_d_.get(), m.N_, a_d_.get(), N_, &beta, c.a_d_.get(), m.N_));
 
   sync_device();
 
@@ -382,4 +402,12 @@ std::pair<size_t, size_t> CudaMatrix::shape() const {
 
 void CudaMatrix::print_shape(std::string str) const {
   std::cout << str << this->M_ << ":" << this->N_ << std::endl;
+}
+
+CudaMatrix CudaMatrix::getHalf() const {
+  if (half_) {
+    std::cout << "This is a half precision matrix." << std::endl;
+    exit(1);
+  }
+  auto ans = CudaMatrix(handle_, M_, N_)
 }
