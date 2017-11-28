@@ -97,7 +97,7 @@ CudaMatrix CudaMatrix::mult_buff(const CudaMatrix& m, CudaMatrix& o) const {
   o.M_ = this->M_;
   o.N_ = m.N_;
 
-  CublasSafeCall(cublasSgemm(handle_, CUBLAS_OP_N, CUBLAS_OP_N, m.N_, M_, N_, &alpha, m.a_d_.get(), m.N_, a_d_.get(), N_, &beta, o.a_d_.get(), m.N_));
+  CublasSafeCall(cublasHgemm(handle_, CUBLAS_OP_N, CUBLAS_OP_N, m.N_, M_, N_, &alpha, m.a_d_.get(), m.N_, a_d_.get(), N_, &beta, o.a_d_.get(), m.N_));
 
   sync_device();
 
@@ -109,7 +109,7 @@ CudaMatrix CudaMatrix::dot(const CudaMatrix& m, float alpha) const {
   float beta = 0.;
   auto c = CudaMatrix(handle_, M_, m.N_);
 
-  CublasSafeCall(cublasSgemm(handle_, CUBLAS_OP_N, CUBLAS_OP_N, m.N_, M_, N_, &alpha, m.a_d_.get(), m.N_, a_d_.get(), N_, &beta, c.a_d_.get(), m.N_));
+  CublasSafeCall(cublasHgemm(handle_, CUBLAS_OP_N, CUBLAS_OP_N, m.N_, M_, N_, &alpha, m.a_d_.get(), m.N_, a_d_.get(), N_, &beta, c.a_d_.get(), m.N_));
 
   sync_device();
 
@@ -122,6 +122,8 @@ CudaMatrix CudaMatrix::operator=(const CudaMatrix& m) {
   this->M_ = m.M_;
   this->N_ = m.N_;
   this->a_d_ = m.a_d_;
+  this->f_d_ = m.f_d_;
+  this->half_ = m.half_;
 
   return *this;
 }
@@ -273,7 +275,7 @@ CudaMatrix CudaMatrix::t() const {
   float alpha = 1.;
   float beta = 0.;
 
-  CublasSafeCall(cublasSgeam(handle_, CUBLAS_OP_T, CUBLAS_OP_T, M_, N_, &alpha, this->a_d_.get(), N_, &beta, this->a_d_.get(), N_, c.a_d_.get(), M_));
+  CublasSafeCall(cublasHgeam(handle_, CUBLAS_OP_T, CUBLAS_OP_T, M_, N_, &alpha, this->a_d_.get(), N_, &beta, this->a_d_.get(), N_, c.a_d_.get(), M_));
 
   sync_device();
   return c;
@@ -368,6 +370,13 @@ CudaMatrix CudaMatrix::rows(std::vector<size_t>& indices) const {
 
 // WORK
 float CudaMatrix::accu() const {
+  float *a_d_tmp;
+  CudaSafeCall(cudaMalloc((void**)&a_d_tmp, M_ * N_ * sizeof (float)));
+  dim3 DimGrid(std::ceil((M_ * N_) / 256.0), 1, 1);
+  dim3 DimBlock(256, 1, 1);
+  h2f<<<DimGrid,DimBlock>>>(a_d_get, a_d_tmp, M_ * N_);
+  CudaSafeCall(cudaFree(a_d_tmp));
+  sync_device();
   return thrust::reduce(thrust::device, a_d_.get(), a_d_.get() + M_ * N_);
 }
 
@@ -409,5 +418,23 @@ CudaMatrix CudaMatrix::getHalf() const {
     std::cout << "This is a half precision matrix." << std::endl;
     exit(1);
   }
-  auto ans = CudaMatrix(handle_, M_, N_)
+  auto ans = CudaMatrix(handle_, M_, N_, true);
+  dim3 DimGrid(std::ceil((M_ * N_) / 256.0), 1, 1);
+  dim3 DimBlock(256, 1, 1);
+  f2h<<<DimGrid,DimBlock>>>(f_d_.get(), aux.a_d_.get(), M_ * N_);
+  CudaSafeCall(cudaFree(a_d_tmp));
+  sync_device();
+}
+
+CudaMatrix CudaMatrix::getHalf() const {
+  if (!half_) {
+    std::cout << "This is a sigle precision matrix." << std::endl;
+    exit(1);
+  }
+  auto ans = CudaMatrix(handle_, M_, N_, false);
+  dim3 DimGrid(std::ceil((M_ * N_) / 256.0), 1, 1);
+  dim3 DimBlock(256, 1, 1);
+  h2f<<<DimGrid,DimBlock>>>(a_d_.get(), aux.f_d_.get(), M_ * N_);
+  CudaSafeCall(cudaFree(a_d_tmp));
+  sync_device();
 }

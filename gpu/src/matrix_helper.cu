@@ -38,7 +38,7 @@ __global__ void randomizeKernel(curandState_t* states, float* a, int n) {
   if (i<n) a[i] = curand_uniform(&states[i]);
 }
 
-__global__ void rowGetter(float* src, float* dest, size_t first, size_t last, size_t col) {
+__global__ void rowGetter(half* src, half* dest, size_t first, size_t last, size_t col) {
   int i = threadIdx.x + blockDim.x * blockIdx.x;
   if (i < last * col && i >= first * col && i < last * col)
     dest[i - first * col] = src[i];

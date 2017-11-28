@@ -5,7 +5,7 @@
 # include <assert.h>
 
 void Model::init_W(size_t m, size_t n) {
-  mat M(handle_, m, n);
+  mat M(handle_, m, n, false);
   M.randomize();
   M = M - .5;
   M = M * 2. * sqrt(6. / (m + n));
@@ -107,7 +107,7 @@ std::vector<mat> Model::get_err(const mat& truth) {
   for (int i = W.size() - 2; i >= 0; --i) {
     if (this->type[i] == "dense") {
       //TODO add an else clause if another layer than dense is supported
-      mat tmp = this->W[i + 1] * err_vec.back().t();
+      mat tmp = this->W[i + 1].getHalf() * err_vec.back().t();
       mat err = tmp.rows(0, tmp.M_ - 1).t();
 
       //this->W[i + 1].mult_buff(err_vec.back().t(), this->tmp);
@@ -131,7 +131,7 @@ void Model::back_propagate(float lambda, const mat truth) {
     if (this->type[i] != "pool")
     {
       mat tmp = err[i].t().dot(this->C[i], lambda);
-      this->W[i] += tmp.t();
+      this->W[i] += tmp.t().getSingle();
     }
   }
 }
@@ -193,6 +193,6 @@ void Model::compile() {
   this->o_buff = mat(this->handle_, max_m + 1, max_n + 1);
 
   // ALLOCATE TMP
-  
+ 
   this->tmp = mat(this->handle_, max_m + 1, max_n + 1);
 }

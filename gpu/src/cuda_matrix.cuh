@@ -3,6 +3,7 @@
 # include <stdexcept>
 # include <cuda_runtime.h>
 # include <cuda.h>
+# include <cuda_fp16.h>
 # include <unistd.h>
 # include <thrust/device_vector.h>
 # include <thrust/execution_policy.h>
@@ -113,6 +114,9 @@ class CudaMatrix {
 
     //Return the float16 version of the matrix
     CudaMatrix getHalf() const;
+
+    //Return the float32 version of the matrix
+    CudaMatrix getSingle() const;
 
     //Allocates memory for this matrix
     void alloc();

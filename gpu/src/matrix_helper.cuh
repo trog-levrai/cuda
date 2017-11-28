@@ -18,6 +18,6 @@ __global__ void matTanh(half* a, int n);
 __global__ void matDTanh(half* a, int n);
 __global__ void init(unsigned int seed, curandState_t* states);
 __global__ void randomizeKernel(curandState_t* states, float* a, int n);
-__global__ void rowGetter(float* src, float* dest, size_t first, size_t last, size_t col);
+__global__ void rowGetter(half* src, half* dest, size_t first, size_t last, size_t col);
 __device__ void f2h(float*, half*, int n);
 __device__ void h2f(half*, float*, int n);
