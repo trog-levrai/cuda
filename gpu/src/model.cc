@@ -182,7 +182,7 @@ std::vector<float> Model::train(const mat& X, const mat& y, size_t nb_epoch, flo
 }
 
 std::vector<float> Model::train(const mat& X, const mat& y, size_t nb_epoch) {
-  return this->train(X, y, nb_epoch, 0.1);
+  return this->train(X, y, nb_epoch, 0.01);
 }
 
 void Model::compile() {
