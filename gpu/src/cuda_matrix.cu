@@ -12,7 +12,7 @@ void sync_device() {
 }
 
 CudaMatrix ones(size_t M, size_t N, cublasHandle_t handle) {
-  auto out = CudaMatrix(handle, M, N);
+  auto out = CudaMatrix(handle, M, N, true);
   cudaMemset((void**)out.getMat().get(), 0, M * N * sizeof (float));
   out += 1.;
 
@@ -78,11 +78,11 @@ CudaMatrix::CudaMatrix(const CudaMatrix& m) {
 
 // WORK
 CudaMatrix CudaMatrix::operator*(const CudaMatrix& m) const {
-  float alpha = 1.;
-  float beta = 0.;
-  auto c = CudaMatrix(handle_, M_, m.N_);
+  half alpha = __float2half(1.);
+  half beta = __float2half(0.);
+  auto c = CudaMatrix(handle_, M_, m.N_, true);
 
-  CublasSafeCall(cublasHgemm(handle_, CUBLAS_OP_N, CUBLAS_OP_N, m.N_, M_, N_, &alpha, m.a_d_.get(), m.N_, a_d_.get(), N_, &beta, c.a_d_.get(), m.N_));
+  CublasSafeCall(cublasHgemm(handle_, CUBLAS_OP_N, CUBLAS_OP_N, m.N_, M_, N_, &alpha, (half*)m.a_d_.get(), m.N_, (half*)a_d_.get(), N_, &beta, (half*)c.a_d_.get(), m.N_));
 
   sync_device();
 
@@ -91,13 +91,13 @@ CudaMatrix CudaMatrix::operator*(const CudaMatrix& m) const {
 
 // WORK
 CudaMatrix CudaMatrix::mult_buff(const CudaMatrix& m, CudaMatrix& o) const {
-  float alpha = 1.;
-  float beta = 0.;
+  half alpha = __float2half(1.);
+  half beta = __float2half(0.);
 
   o.M_ = this->M_;
   o.N_ = m.N_;
 
-  CublasSafeCall(cublasHgemm(handle_, CUBLAS_OP_N, CUBLAS_OP_N, m.N_, M_, N_, &alpha, m.a_d_.get(), m.N_, a_d_.get(), N_, &beta, o.a_d_.get(), m.N_));
+  CublasSafeCall(cublasHgemm(handle_, CUBLAS_OP_N, CUBLAS_OP_N, m.N_, M_, N_, &alpha, (half*)m.a_d_.get(), m.N_, (half*)a_d_.get(), N_, &beta, (half*)o.a_d_.get(), m.N_));
 
   sync_device();
 
@@ -106,10 +106,11 @@ CudaMatrix CudaMatrix::mult_buff(const CudaMatrix& m, CudaMatrix& o) const {
 
 // WORK
 CudaMatrix CudaMatrix::dot(const CudaMatrix& m, float alpha) const {
-  float beta = 0.;
-  auto c = CudaMatrix(handle_, M_, m.N_);
+  half a = __float2half(alpha);
+  half beta = __float2half(0.);
+  auto c = CudaMatrix(handle_, M_, m.N_, true);
 
-  CublasSafeCall(cublasHgemm(handle_, CUBLAS_OP_N, CUBLAS_OP_N, m.N_, M_, N_, &alpha, m.a_d_.get(), m.N_, a_d_.get(), N_, &beta, c.a_d_.get(), m.N_));
+  CublasSafeCall(cublasHgemm(handle_, CUBLAS_OP_N, CUBLAS_OP_N, m.N_, M_, N_, &a, (half*)m.a_d_.get(), m.N_, (half*)a_d_.get(), N_, &beta, (half*)c.a_d_.get(), m.N_));
 
   sync_device();
 
@@ -130,8 +131,9 @@ CudaMatrix CudaMatrix::operator=(const CudaMatrix& m) {
 
 // WORK
 CudaMatrix CudaMatrix::operator*(float x) const {
-  auto c = CudaMatrix(*this);
-  CublasSafeCall(cublasSscal(handle_, c.M_ * c.N_, &x, c.a_d_.get(), 1));
+  half aux = __float2half(x);
+  auto c = CudaMatrix(*this, true);
+  CublasSafeCall(cublasHscal(handle_, c.M_ * c.N_, &aux, (half*)c.a_d_.get(), 1));
 
   sync_device();
 

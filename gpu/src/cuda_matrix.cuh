@@ -123,7 +123,7 @@ class CudaMatrix {
 
   private:
     std::shared_ptr<float> f_d_ = NULL;
-    std::shared_ptr<half> a_d_ = NULL;
+    std::shared_ptr<void> a_d_ = NULL;
     cublasHandle_t handle_;
     bool half_;
   public:
