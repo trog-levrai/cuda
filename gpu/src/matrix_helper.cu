@@ -35,10 +35,14 @@ __global__ void scalarAddKernel(void* A, float s, void* C, int n) {
   }
 }
 
-__global__ void matTransformKernel(void* A, half (*f)(half), int n) {
+__global__ void scalarMulKernel(void* A, float s, void* C, int n) {
   int i = threadIdx.x + blockDim.x * blockIdx.x;
   half* a = (half*)A;
-  if (i<n) a[i] = f(a[i]);
+  half* c = (half*)C;
+  if (i<n) {
+    half h = __float2half(s);
+    c[i] = a[i] * h;
+  }
 }
 
 __global__ void init(unsigned int seed, curandState_t* states) {
@@ -92,11 +96,13 @@ __global__ void matDTanh(void* a, int n) {
     a[i] = 1. - h * h;
   }
 }
+
 __global__ void f2h(float* src, void* dst, int n) {
   int i = threadIdx.x + blockDim.x * blockIdx.x;
   half* d = (half*)dst;
   if (i<n) d[i] = __float2half(src[i] * SF);
 }
+
 __global__ void h2f(void* src, float* dst, int n) {
   int i = threadIdx.x + blockDim.x * blockIdx.x;
   half* s = (half*)src;

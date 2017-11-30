@@ -13,12 +13,10 @@ void Model::init_W(size_t m, size_t n) {
 }
 
 const mat Model::activate(mat& matrix, const std::string func) {
-  //return matrix.transform(map_func.at(func)->f());
   return matrix.relu();
 }
 
 const mat Model::d_activate(mat& matrix, const std::string func) {
-  //return matrix.transform(map_func.at(func)->d_f());
   return matrix.d_relu();
 }
 

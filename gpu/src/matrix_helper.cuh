@@ -11,7 +11,7 @@ __global__ void vecMulKernel(void* a, void* b, void* c, int n);
 __global__ void vecAddKernel(void* a, void* b, void* c, int n);
 __global__ void vecSubKernel(void* a, void* b, void* c, int n);
 __global__ void scalarAddKernel(void*, float, void*, int);
-__global__ void matTransformKernel(void* a, half (*f)(half), int n);
+__global__ void scalarMulKernel(void*, float, void*, int);
 __global__ void matRelu(void* a, int n);
 __global__ void matDRelu(void* a, int n);
 __global__ void matTanh(void* a, int n);

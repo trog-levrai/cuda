@@ -77,9 +77,6 @@ class CudaMatrix {
     CudaMatrix t() const;
 
     //Transform and return a matrix by a func
-    CudaMatrix transform(float (*f)(float));
-
-    //Transform and return a matrix by a func
     CudaMatrix relu();
 
     //Transform and return a matrix by a func
@@ -132,3 +129,6 @@ class CudaMatrix {
 };
 
 CudaMatrix ones(size_t M, size_t N, cublasHandle_t handle);
+half uint16_as_fp16 (uint16_t a);
+uint32_t fp32_as_uint32 (float a);
+half float2half_rn (float a);
